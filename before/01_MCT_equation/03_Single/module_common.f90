@@ -22,7 +22,7 @@ module module_common
     real(8),parameter           :: d12    = (d11 + d22)/2.0  
     real(8),parameter           :: d(m*m) = (/d11,d12,d22,0D0/)
     ! the number dendity
-    real(8),parameter           :: rho    = 0.9
+    real(8),parameter           :: rho    = 0.4
     !   matrix T and dimensionless
     real(8),parameter           :: atom   = 1.6605402E-27
     real(8),parameter           :: temper = 300.0           ! temperature 

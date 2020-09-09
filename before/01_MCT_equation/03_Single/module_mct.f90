@@ -1,5 +1,6 @@
 module module_mct
     use module_common
+    integer             :: jj
 
 contains
 !subroutine getmatrixes{{{
@@ -20,6 +21,7 @@ subroutine getmatrixes()
     ! read Sk and Ck
     do i = 1,ncut
         read(20,*,iostat = ierror)tmpa,sk(i)
+        sk(i) = 9.5*sk(i)
         !print *,sk(i)
         !pause
         if(ierror /= 0)exit
@@ -45,16 +47,16 @@ subroutine getmatrixes()
     end do
     !  get matrix A
     do q = 1,ncut
-        tovl = h**7.0/(16.0*pi**2.0*dble(q)*rho)
+        tovl = h**3.0*rho/(32.0*pi**2.0*dble(q)**5.0)
        ! print *,"tovl = ",tovl
        ! pause
         do k = 1,ncut
-            do p = min(q,k),ncut
+            do p = abs(q-k),ncut
                 if(p == 0)cycle
                 l1 = dble(q)**2.0 + dble(k)**2.0 - dble(p)**2.0
                 l2 = dble(q)**2.0 + dble(p)**2.0 - dble(k)**2.0
-                mat_A(p,q,k) = tovl*p*k*l1*ck(k)*(l1*ck(k) + &
-                               l2*ck(p))
+                mat_A(p,q,k) = tovl*p*k*l1*sk(k)*sk(q)*sk(p)*&
+                               ck(k)*(l1*ck(k) + l2*ck(p))
             end do
         end do
     end do
@@ -73,7 +75,7 @@ subroutine getmct()
 
    ! get initial f(q,1)
    do ii = 1,ncut
-       f(ii,1) = sk(ii)
+       f(ii,1) = 1.0
    end do
    ! get matrix U
    ! get memory(q,1)
@@ -209,6 +211,7 @@ function getfinal()
     integer              :: times 
 
     tmpa = 1.0 
+    sk(:) = 1.0
     do 
         newmemory = getnew_memory(tmpa)
         do ii = 1,ncut
@@ -251,5 +254,4 @@ function judge(a,b,n)
     
 end function judge
 !}}}
-
 end module module_mct
