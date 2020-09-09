@@ -1,6 +1,5 @@
 module module_algebra
     implicit none
-    include "omp_lib.h"
     contains
 !function sol_equ{{{
 function sol_equ(a,b,n)
