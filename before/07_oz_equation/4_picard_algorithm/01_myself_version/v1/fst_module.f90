@@ -1,8 +1,95 @@
-module fst_module
+module module_fst
+
+    integer     i
+    integer     j
+    real        t1
+    real        t2
+
 contains
 
 !--****************************************************************--!
-!function fst{{{
+!!subroutine fst{{{
+!! od for output data
+!! id for input data
+!subroutine fst(od,id,ju)
+!real*8, parameter           ::  pi=3.1415926
+!integer                     ::  ju
+!integer                     ::  i, j
+!real*8, dimension(0:n-1)    ::  id
+!real*8, dimension(0:n-1)    ::  od
+!real*8, dimension(0:n-1)    ::  tbr, tbi, tor, toi
+!real*8                      ::  dr, dk, th
+!
+!dr=0.05
+!dk=(pi/dble(n))/dr
+!
+!tbr(0)=0.0; tbi=0.0
+!do i=1, n-1
+!    tbr(i)=sin(pi*dble(i)/dble(n))*(id(i)+id(n-i))+0.5*(id(i)-id(n-i))
+!enddo
+!
+!call fft(l, n, tbr, tbi, tor, toi)
+!
+!od(0)=0.0
+!od(1)=0.5*tor(0)
+!do j=1, n/2-1
+!    i=j+j
+!    od(i)=toi(j)
+!    od(i+1)=od(i-1)+tor(j)
+!enddo
+!
+!if (ju==1) then
+!    th=4.0*dr*pi
+!    od(:)=th*od(:)
+!elseif (ju==-1) then
+!    th=dk/(2.0*(pi**2.))
+!    od(:)=th*od(:)
+!endif
+!
+! end subroutine fst
+!!}}}
+!!function fst{{{
+!! od for output data
+!! id for input data
+!function fst(id,ju)
+!real*8, parameter           ::  pi=3.1415926
+!integer                     ::  ju
+!integer                     ::  i, j
+!real*8, dimension(0:n-1)    ::  id
+!real*8, dimension(0:n-1)    ::  fst
+!real*8, dimension(0:n-1)    ::  tbr, tbi, tor, toi
+!real*8                      ::  dr, dk, th
+!
+!dr=0.05
+!dk=(pi/dble(n))/dr
+!
+!tbr(0)=0.0
+!tbi=0.0
+!do i=1, n-1
+!    tbr(i)=sin(pi*dble(i)/dble(n))*(id(i)+id(n-i))+0.5*(id(i)-id(n-i))
+!enddo
+!
+!call fft(l, n, tbr, tbi, tor, toi)
+!
+!fst(0)=0.0
+!fst(1)=0.5*tor(0)
+!do j=1, n/2-1
+!    i=j+j
+!    fst(i)=toi(j)
+!    fst(i+1)=fst(i-1)+tor(j)
+!enddo
+!
+!if (ju==1) then
+!    th=4.0*dr*pi
+!    fst(:)=th*fst(:)
+!elseif (ju==-1) then
+!    th=dk/(2.0*(pi**2.))
+!    fst(:)=th*fst(:)
+!endif
+!
+!  end function fst
+!!}}}
+!original function fst{{{
 function fst(id, n, l, ju)
 integer                        :: n, l, ju
 integer                        :: i, j
@@ -109,7 +196,7 @@ subroutine fft(l,n,x_real,x_imag,fx_real,fx_imag)
 ! 一维快速富里叶变换, n为数据个数，n=2^l，x为输入的时间序列
 ! fx为输出的频谱序列，real和imag为相应的实部和虚部
 integer        ::    l,n,flag,ia,ib
-real*8        ::    x_real(n),x_imag(n),fx_real(n),fx_imag(n),x1(2),x2(2)
+real*8         ::    x_real(n),x_imag(n),fx_real(n),fx_imag(n),x1(2),x2(2)
 ! 重排输入数据顺序为fft输入顺序：
 !         将输入数据位置转换为2进制数翻转即为fft输入顺序位置的2进制数
 !         需要注意，上述转换位置顺序从0开始到n-1，fortran存储位置顺序
@@ -163,16 +250,16 @@ real*8        ::    x_real(n),x_imag(n),fx_real(n),fx_imag(n)
 real*8        ::    pi=3.1415926535
 fx_real=x_real;fx_imag=x_imag
 do i=1,n/2
-    x_real(i)=fx_real(i)+fx_real(i+n/2)*cos(2*pi*(i-1)/n)&
-              -fx_imag(i+n/2)*sin(2*pi*(i-1)/n)
-    x_imag(i)=fx_imag(i)+fx_imag(i+n/2)*cos(2*pi*(i-1)/n)&
-              +fx_real(i+n/2)*sin(2*pi*(i-1)/n)
-    x_real(i+n/2)=fx_real(i)-fx_real(i+n/2)*cos(2*pi*(i-1)/n)&
-                 +fx_imag(i+n/2)*sin(2*pi*(i-1)/n)
-    x_imag(i+n/2)=fx_imag(i)-fx_imag(i+n/2)*cos(2*pi*(i-1)/n)&
-                 -fx_real(i+n/2)*sin(2*pi*(i-1)/n)
+      x_real(i)  = fx_real(i)+fx_real(i+n/2)*cos(2*pi*(i-1)/n)&
+                   -fx_imag(i+n/2)*sin(2*pi*(i-1)/n)
+      x_imag(i)  = fx_imag(i)+fx_imag(i+n/2)*cos(2*pi*(i-1)/n)&
+                   +fx_real(i+n/2)*sin(2*pi*(i-1)/n)
+    x_real(i+n/2)= fx_real(i)-fx_real(i+n/2)*cos(2*pi*(i-1)/n)&
+                   +fx_imag(i+n/2)*sin(2*pi*(i-1)/n)
+    x_imag(i+n/2)= fx_imag(i)-fx_imag(i+n/2)*cos(2*pi*(i-1)/n)&
+                   -fx_real(i+n/2)*sin(2*pi*(i-1)/n)
 end do !i
 end subroutine butterfly
 !********************************************************************
 
-end module fst_module
+end module module_fst
