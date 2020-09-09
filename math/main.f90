@@ -1,9 +1,21 @@
 program main
     use module_common
     implicit none
-    real(8)             a(n,n)
-    real(8)             b(n,n)
-    real(8)             c(n,n)
 
+    integer               :: n
+
+    ! initial the status
+
+    do n = 10,50
+         allocate(a(n))
+         allocate(b(n))
+         a = 0
+         c = getFinal(n,m)
+         print *,n,c
+         deallocate(a)
+         deallocate(b)
+    enddo !cycle ends
+    ! game begins
+     
 
 end program main
