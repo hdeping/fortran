@@ -1,30 +1,42 @@
 program main
-    use module_function
-
+    use module_algebra
     implicit none
-
-    filename = "solution.txt"
-    open(10,file = filename)
+    integer,parameter      :: n = 4
+    real(8)                :: a(n,n)
+    real(8)                :: b(n)
+    real(8)                :: x(n)
+    real(8)                :: s(n)   ! abs(s(i)) < 1
+    real(8)                :: t1
+    real(8)                :: t2
+    real(8)                :: x1
+    integer                :: i
+    integer                :: j
+    integer                :: ii
+    integer                :: jj
 
     call random_seed()
-    !do i = 1,100000
-    !    call random_number(t1) 
-    !    call random_number(t2) 
-    !    call random_number(t3) 
-    !    call random_number(t4) 
-    !    t1 = t1*10000 - 5000
-    !    t2 = t2*10000 - 5000
-    !    t3 = t3*10000 - 5000
-    !    t4 = t4*10000 - 5000
-    !    x  = (/t1,t2,t3,t4/)
-    !    times = 0
-    !    call iter_NR()
-    !    if(times /= fre)write(10,"(<n>f12.6)")x(:)
-    !    if(mod(i,fre) == 0)print *,x
-    !end do
-    x = (/1.974018,0.160667,2.473845,2.159975/)
-    print *,fun1(x),fun2(x),fun3(x),fun4(x)
-
-    close(10)
-
+    do ii = 1,n
+        do jj = 1,n
+            call random_number(x1)
+            a(ii,jj) = x1*10000.0 - 5000.0
+            if(ii == jj)a(ii,jj) = 0.0
+        end do
+        call random_number(x1)
+        b(ii) = 10000*x1 - 5000.0
+        call random_number(s(ii))
+    end do
+    a = sol_mat(a,multi_mat(a,b,n,n,n),n)
+!program before{{{
+   ! a(1,:) = (/0.0,0.0,2.0,3.0/)
+   ! a(2,:) = (/5.0,4.0,0.0,0.0/)
+   ! a(3,:) = (/3.0,0.0,3.0,0.0/)
+   ! a(4,:) = (/0.0,3.0,0.0,9.0/)
+!}}}
+    call cpu_time(t1)
+    x = iter_sol_equ(a,b,n) 
+    !x = iter_sol_new(a,b,n) 
+    !x1 = det(a,n)
+    print *,"det = ",x1
+    call cpu_time(t2)
+    print *,"time cost is ==>  ",t2 - t1
 end program main
