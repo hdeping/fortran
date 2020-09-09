@@ -9,6 +9,8 @@ program main
     real(8)    :: c(n)
     
 
+    filename = "g_r.txt"
+    open(10,file = filename)
     !  initial the k and r
     do i = 1,n
         dk(i) = (i - 1)*deltak
@@ -18,12 +20,7 @@ program main
     maymm = may(dmm)
 !********************************************************** 
 
-    !  solve the equation with diffrent rhoms
-!do ii = 1,18
-    ii = 0
-    write(filename,"('g_rmm',i2.2,'.txt')")ii
-    rhom = 0.05  !*dble(ii)
-    open(10,file = filename)
+    !  solve the equation
     call cpu_time(t1)
     call evolution()
     call cpu_time(t2)
@@ -40,8 +37,8 @@ program main
         write(10,*)dr(i),g_rmm(i) 
     end do
     print *,"time cost is ",t2 - t1
+
     close(10)
-!end do   ! ii
     !print *,hkmm(10)
 end program main
 !test the fst program{{{

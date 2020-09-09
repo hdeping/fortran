@@ -128,13 +128,18 @@ subroutine evolution()
         ! fft to calculate ckmm
         ckmm = fst(crmm,1)
         ! judge the convergence
+        ! get a mean value of ckmm
+        do i = 1,n
+            ckmm(i) = (ckmm(i) + test(i))/2.0
+        end do
         lambda = judge(test,ckmm)
-        if(lambda < error)exit
-        times = times + 1
-        if(mod(times,fre) == 0)then
-            print *,lambda
-            pause
+        times  = times + 1
+
+        !if(times > int(1E4))exit
+        if(mod(times,10) == 0)then
+            print *,"lambda  = ",lambda
         endif
+        if(lambda < error)exit
     end do
 end subroutine evolution
 !}}}
