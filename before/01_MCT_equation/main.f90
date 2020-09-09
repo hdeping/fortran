@@ -3,36 +3,48 @@ program main
     use module_mct
     integer               :: itmp
     integer               :: jtmp
+    integer               :: sunit(ncut)
 
-    ! get dk
-    do itmp = 1,n
-        dk(itmp) = dble(itmp)*h
-        !print *,dk(itmp)
-        !pause
+    !  prepare some variables and parameters
+    call getmatrixes()
+    !  open files
+    do i  = 1,ncut
+        sunit(i) = 100 + i
+        write(filename,"('q',i3.3,'.txt')")i
+        open(sunit(i),file = filename)
     end do
-    ! get sk
-    filename = "sk.txt"
-    open(10,file = filename,status = "old",iostat = ierror)
+    ! get MCT
+    dt = 1.0E-5
 
-    do itmp  = 1,ncut
-        read(10,*,iostat = ierror)xtmp, sk(itmp)
-        !print *,sk(itmp)
-        !pause
-        if(ierror /= 0)exit
-    end do
-    close(10)
-    write(filename,"('fq',i5.5,'.txt')")int(1000*smul)
-    open(10,file = filename)
-    
-    ! get final f
-    finalf = getfinal()
-    lambda = judge(finalf,sk(1:ncut),ncut)
-    print *,"lambda = ",lambda
-
+    call cpu_time(t1)
+    call getmct()
+    call cpu_time(t2)
+    print *,"time cost is ==> ",t2 - t1
+    ! print first tmnum data
     do itmp = 1,ncut
-        write(10,"(2f18.6)")dk(itmp),finalf(itmp)
+        do jtmp = 1,tmnum
+           write(sunit(itmp),"(2f18.6)")dt*jtmp,f(itmp,jtmp)
+        end do
     end do
-    close(10)
+    !  get the data of the rest time
+    do i = 1,10
+        call cpu_time(t1)
+        dt = dt*2.0
+        ! get a solution cycle
+        call getmct2()
+        do itmp = 1,ncut
+            do jtmp = tmnum/2 + 1,tmnum
+               write(sunit(itmp),"(2f18.6)")dt*jtmp,f(itmp,jtmp)
+            end do
+        end do
+        call cpu_time(t2)
+        print *,"time cost is ==> ",t2 - t1
+    enddo
+     
+     do i  = 1,ncut
+         close(sunit(i))
+     end do
+
 
 end program main
 !code before{{{
@@ -54,6 +66,11 @@ end program main
     !end do
     !close(10)
 
-
-
+    !open(10,file = filename,form = "binary")
+    !do i = 1,ncut
+    !    do j = 1,tmnum/2
+    !        write(10)j*dt,f(1,1:2,i,j),f(2,2,i,j)
+    !    end do
+    !end do
+    !close(10)
 !}}}
