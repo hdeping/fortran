@@ -1,31 +1,35 @@
 module fst_module
-    real(8),parameter      :: pi = 3.1415926
 
 contains
 
 !function fst{{{
 function fst(id, n, l, ju)
-integer                                ::            n, l, ju
-integer                                ::            i, j
-real*8, dimension(0:n-1)               ::            id
-real*8, dimension(0:n-1)               ::            tbr, tbi, tor, toi
-real*8, dimension(0:n-1)               ::            fst
 real*8, parameter                      ::            pi=3.1415926
-real*8                                 ::            dr, dk, th
+integer                                ::            n
+integer                                ::            l
+integer                                ::            ju
+integer                                ::            i
+integer                                ::            j
+real(8), dimension(0:n-1)              ::            id
+real(8), dimension(0:n-1)              ::            tbr
+real(8), dimension(0:n-1)              ::            tbi
+real(8), dimension(0:n-1)              ::            tor
+real(8), dimension(0:n-1)              ::            toi
+real(8), dimension(0:n-1)              ::            fst
+real(8)                                ::            dr
+real(8)                                ::            dk
+real(8)                                ::            th
 
-dr=0.05
-dk=(pi/dble(n))/dr
+dr=0.05; dk=(pi/dble(n))/dr
 
-tbr(0)=0.0
-tbi=0.0
+tbr(0)=0.0; tbi=0.0
 do i=1, n-1
     tbr(i)=sin(pi*dble(i)/dble(n))*(id(i)+id(n-i))+0.5*(id(i)-id(n-i))
 enddo
 
 call fft(l, n, tbr, tbi, tor, toi)
 
-fst(0)=0.0
-fst(1)=0.5*tor(0)
+fst(0)=0.0; fst(1)=0.5*tor(0)
 do j=1, n/2-1
     i=j+j
     fst(i)=toi(j)
@@ -112,18 +116,9 @@ end subroutine afar4
 !subroutine fft{{{
 subroutine fft(l,n,x_real,x_imag,fx_real,fx_imag)
 ! 一维快速傅立叶变换, n为数据个数，n=2^l，x为输入的时间序列
-integer       ::    l        !
-integer       ::    n        ! n = 2^l
-integer       ::    flag     !
-integer       ::    ia       !
-integer       ::    ib       !
 ! fx为输出的频谱序列，real和imag为相应的实部和虚部
-real*8        ::    x_real(n)
-real*8        ::    x_imag(n)
-real*8        ::    fx_real(n)
-real*8        ::    fx_imag(n)
-real*8        ::    x1(2)
-real*8        ::    x2(2)
+integer        ::    l,n,flag,ia,ib
+real*8        ::    x_real(n),x_imag(n),fx_real(n),fx_imag(n),x1(2),x2(2)
 ! 重排输入数据顺序为fft输入顺序：
 !         将输入数据位置转换为2进制数翻转即为fft输入顺序位置的2进制数
 !         需要注意，上述转换位置顺序从0开始到n-1，fortran存储位置顺序
@@ -156,7 +151,7 @@ real*8    freq(n)
 do i=0,n-1
     flag=i
     if(i>n/2) flag=i-n    
-    freq(i+1)=flag*2*pi/n
+    freq(i+1)=flag*2*3.1415926535/n
 end do !i
 end subroutine getfftfreq
 !}}}
@@ -186,16 +181,6 @@ do i=1,n/2
     x_real(i+n/2)=fx_real(i)-fx_real(i+n/2)*cos(2*pi*(i-1)/n)+fx_imag(i+n/2)*sin(2*pi*(i-1)/n)
     x_imag(i+n/2)=fx_imag(i)-fx_imag(i+n/2)*cos(2*pi*(i-1)/n)-fx_real(i+n/2)*sin(2*pi*(i-1)/n)
 end do !i
-!it can also be expressed by the following codes 
-!complex x(n)
-!complex y(n)
-!complex w
-!integer k
-!do k = 1,n/2
-!    w        = exp((0,2*pi*(k-1)/n))
-!    x(k)     = y(k) + y(k+n/2)*w
-!    x(k+n/2) = y(k) - y(k+n/2)*w
-!end do
 end subroutine butterfly
 !********************************************************************
 !}}}
