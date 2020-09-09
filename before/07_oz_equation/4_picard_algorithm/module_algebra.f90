@@ -18,41 +18,37 @@ function sol_equ(a,b,n)
     integer               :: k
     s = 0
     ! initial the new array c(n,n+1)
-    do i = 1,n
-        do j = 1,n
-            c(i,j) = a(i,j)
-        end do
-        c(i,n+1) = b(i)
-    end do
+    c(:,1:n) = a
+    c(:,n+1) = b
     !do i = 1,n
     !    print "(<n+1>f8.3)",c(i,:)
     !end do
     
      do  i = 1,n
          if(c(i,i) == 0)then
-            do j = i+1,n
-                if(c(j,i) /= 0)exit
-            end do     !  i
-            if(j == n+1)then
-                s = 1
-                cycle
-            else
-                do k = i,n+1          !  the ith column to  (n+1)th  column
+         do j = i+1,n
+             if(c(j,i) /= 0)exit
+         end do     !  i
+         if(j == n+1)then
+             s = 1
+             cycle
+         else
+             do k = i,n+1          !  the ith column to  (n+1)th  column
                       tmp = c(i,k)
                    c(i,k) = c(j,k)
                    c(j,k) = tmp
-               end do  !k
-            endif
+            end do  !k
          endif
+         end if
          if(s == 0)then
-            do j = 1,n
-                if(j == i)cycle
-                if(c(j,i) == 0)cycle
-                rate = c(j,i)/c(i,i)
-                do k = i,n+1         !  the ith column to  (n+1)th  column
-                    c(j,k) = c(j,k)-rate*c(i,k)
-                end do   !k
-            end do   !j
+         do j = 1,n
+             if(j == i)cycle
+             if(c(j,i) == 0)cycle
+             rate = c(j,i)/c(i,i)
+             do k = i,n+1         !  the ith column to  (n+1)th  column
+                 c(j,k) = c(j,k)-rate*c(i,k)
+             end do   !k
+         end do   !j
          end if     
      end do   !i
      do i = 1,n
