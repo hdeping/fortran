@@ -1,19 +1,16 @@
 program main
-    use module_regre
     implicit none
-    integer,parameter   :: n     = 998
-    integer,parameter   :: m     = n/2
-    real(8),parameter   :: dt1   = 1D-3
-    real(8),parameter   :: dt    = 1D-2
-    real(8),parameter   :: delta = 1D-7
-    real(8),parameter   :: bg    = 0.0
-    real(8),parameter   :: ed    = 5.0
+    integer,parameter   :: n     = 49
+    integer,parameter   :: num   = 14
+    real(8),parameter   :: delta = 1D-9
+    real(8),parameter   :: fn    = 5D-1
+    real(8)             :: bg   
+    real(8)             :: ed   
+    real(8)             :: dt   
+    real(8)             :: reta ! restart
     integer             :: i
     integer             :: j
     real(8)             :: x
-    real(8)             :: y
-    real(8)             :: r
-    real(8)             :: tmp
     real(8)             :: a(n)
     real(8)             :: b(n)
     character(10)       :: filename 
@@ -21,34 +18,90 @@ program main
     filename = "data.txt"
     open(10,file = filename)
 
-    do i = m,1,- 1
-        x    = - dble(i)*dt1
-        a(i) = x
-        b(i) = getgamma2(x)
-    end do
-    do i = 1,m
-        x        = dble(i)*dt
-        a(i+m) = x
-        b(i + m) = getgamma2(x)
-    end do
-
-    tmp  = 0.0
+    bg   = 0.0
+    ed   = 5.0
+    dt   = 1D-2
     do i = 1,n
-        a(i) = log(2.0*a(i) + 1) - 2.0*a(i)
-        b(i) = log(b(i))
-        tmp  = (tmp*(i - 1) + b(i)/a(i))/dble(i)
-        write(10,"(3f12.6)")a(i),b(i),tmp
+         x   = dble(i)*dt
+        b(i) = sol_b(x)
+        write(10,"(2f18.9)")x,b(i)
     end do
-    print *,"tmp = ",tmp
-    call regre(x,y,r,a(1:m),b(1:m),m)
-    print *,"x = ",x
-    print *,"y = ",y
-    print *,"r = ",r
-    call regre(x,y,r,a(m+1:n),b(m+1:n),m)
-    print *,"x = ",x
-    print *,"y = ",y
-    print *,"r = ",r
-
+    reta = dble(n)*dt
+    do j = 1,num
+        dt   = dt/10.0
+        do i = 1,9
+             x   = reta + dble(i)*dt
+            b(i) = sol_b(x)
+             x   = - log(fn - x)
+            write(10,"(2f18.9)")x,b(i)
+        end do
+        reta  = x
+    end do
 
     close(10)
+    contains
+!function getgamma{{{
+function getgamma(x)
+    real(8),intent(in)       :: x
+    real(8)                  ::getgamma
+    getgamma = log(1 - 2.0*x) + 2.0*x
+end function getgamma
+!}}}
+!function getgamma2{{{
+function getgamma2(x)
+    real(8),intent(in)       :: x
+    real(8)                  ::getgamma2
+    getgamma2 = log(1 + 2.0*x) - 2.0*x
+end function getgamma2
+!}}}
+!function fun{{{
+function fun(x,y)
+    real(8),intent(in)       :: x
+    real(8),intent(in)       :: y
+    real(8)                  ::fun
+    fun = getgamma2(x) - y
+end function fun
+!}}}
+!function par_f{{{
+function par_f(x)
+    real(8),intent(in)       :: x
+    real(8)                  ::par_f
+    par_f = 2.0/(1.0 + 2.0*x) - 2.0*x
+end function par_f
+!}}}
+!function sol_b{{{
+function sol_b(x)
+    real(8),intent(in)   :: x
+    real(8)              :: sol_b
+    real(8)              :: y
+    real(8)              :: ra
+    real(8)              :: rb
+    real(8)              :: rc
+
+    y  = getgamma(x)
+    ra = bg
+    !print *,"x = ",x
+    do 
+        if(fun(ed,y) < 0.0)exit
+        ed = 2.0*ed  
+    end do
+    rb = ed
+
+    do 
+        rc  = (ra + rb)/2.0
+        if(fun(rc,y) > 0.0)then
+            ra = rc
+        else
+            rb = rc
+        endif
+        if(abs(ra - rb) < delta)exit
+    end do
+    sol_b = rc
+    !pause
+    !print *,"times = ",times
+
+
+end function sol_b
+!}}}
+
 end program main
