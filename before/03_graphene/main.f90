@@ -6,12 +6,12 @@ use KMCevent_module
 use event_module
 
 real*8                ::    rate
-integer                ::    i_level
+integer                ::    i_level, icolor
 real                ::    dEH1(6),dEH2(6)
 real                ::    dET1(6),dET2(6)
 integer,parameter    ::    nT_tot = 1E6
 real*8                ::    freq(6,4)
-integer                ::    theProc,icolor
+integer                ::    theProc
 
 call random_seed()
 ! 初始化绘图窗口及记录鼠标事件的变量
@@ -29,15 +29,15 @@ do i = 1,191
 enddo !i
 close(11)
 close(12)
-icolor = settextcolor(int2(0))
 call InitGraphWindow(color_background)
+icolor  =  settextcolor(int2(0))
 pause
 dET1 = dEiT_B-dEiH_B
 dET2 = dEiT_B2-dEiH_B2    
 
 write(fName,"('growthCnt.dat')")
 open(13,file = fName)
-do irun = 0,20 !20,修改  !！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
+do irun = 0,20 !20
     nt = 0
     c_ci(1) = 0.01    
     !ii = 5
@@ -48,11 +48,11 @@ do irun = 0,20 !20,修改  !！！！！！！！！！！！！！！！！！！！！！！！！！！！
     call SetGraphWindow( x_scr, y_scr, x_scr+w_scr, y_scr+h_scr )
     Call SetTextWindow( int2(46), int2(5), int2(47), int2(860) )
     call drawBonds()
-    call drawSites()    
+    !!call drawSites()    
 !    call drawSites_growthStatus()    
-    !open(10,file = 'count.dat')                              !  修改
-    !write(fName,"('cnt',I2.2,'.dat')") 20-irun
-    !open(12,file = fName)
+    open(10,file = 'count.dat')
+    write(fName,"('cnt',I2.2,'.dat')") 20-irun
+    open(12,file = fName)
 !    do while(nt<nT_tot)
     do while(sum(cnt_growth)<100000)
         !更新各参数
@@ -80,8 +80,11 @@ do irun = 0,20 !20,修改  !！！！！！！！！！！！！！！！！！！！！！！！！！！！
         ! 移动观察窗口
         if(pos_front>nx_ltc-1) then
             call moveLattice()
+            read*
             Call ClearScreen($GCLEARSCREEN)
+            read*
             call drawBonds()
+            read*
             call drawSites()
 !            call drawSites_growthStatus()    
 !            call redraw(pos_graphene,pos_front)
@@ -94,15 +97,15 @@ do irun = 0,20 !20,修改  !！！！！！！！！！！！！！！！！！！！！！！！！！！！
             call redraw(pos_graphene,pos_front+1)
 !            call drawSites_growthStatus()    
             rate = dble(0.142*1.5*(pos_graphene+xPos_ltc-2))/dble(time)
-            print*,nt, time,rate,int(sum(cnt_growth))
+            !print*,nt, time,rate,int(sum(cnt_growth))
             open(11,file = 'dt.dat')
             write(11,"(7G18.9)") 0.05*real(20-irun),cnt_growth/sum(cnt_growth)
             close(11)
         endif
 !        write(13,"(7G18.9)") 0.05*real(20-irun),sum(cnt_growth)
     enddo
-    !close(10)
-    !close(12)
+    close(10)
+    close(12)
     write(13,"(7G18.9)") 0.05*real(20-irun),cnt_growth/sum(cnt_growth)
 !    call freqCNT(irun,freq)
 enddo !irun
