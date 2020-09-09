@@ -1,95 +1,90 @@
 program main
-    !use module_fst 
-    use module_evolution
-    integer  itmp
+    use module_fst
 
-    real(8)        :: a(n)
-    real(8)        :: b(n)
-    real(8)        :: c(n)
-    character(7)   :: ch_b = "       "
+    !print *,10
     
 
-    filename = "g_r.txt"
+    filename = "data_g_rmm.txt"
     open(10,file = filename)
-    filename = "gr.txt"
+    filename = "data_g_rfm.txt"
     open(20,file = filename)
-    filename = "cr.txt"
+    filename = "data_g_rffb.txt"
     open(30,file = filename)
-    filename = "hr.txt"
+    filename = "data_g_rff.txt"
     open(40,file = filename)
-    filename = "check.txt"
+    filename = "run.log"
     open(50,file = filename)
-    !filename = "test.txt"
-    !open(50,file = filename)
-    !  initial the k and r
-    do i = 1,n
-        dk(i) = (i - 1)*deltak
-        dr(i) = (i - 1)*deltar
-    end do
+    ! initial the value of c(four arrays)
 
-    maymm = may(dmm)
+      ckmm = 1.0  
+      ckfm = 1.0
+     ckffb = 1.0
+     ckff  = 1.0
+    !call random_number(ckmm(:) )
+    !call random_number(ckfm(:) )
+    !call random_number(ckffb(:))
+    !call random_number(ckffc(:))
+    !!print *,ckmm
+    !!pause
+
+    j = 0
+    times = 0
+
+    !  initial the k and r
+        dk(1) =  0.0
+        dr(1) =  0.0
+    do i = 2,n
+        dk(i) = i*deltak
+        dr(i) = i*deltar
+    end do
+    !  call the mayer function
+    call may(maymm,dmm)
+    call may(mayfm,dfm)
+    call may(mayff,dff)
 !********************************************************** 
 
     !  solve the equation
-    call cpu_time(t1)
-    call evolution_new()
-    call cpu_time(t2)
-
-    print *,"lambda is ",lambda
-    !  write ck to the file
-    g_rmm(1) = 0.0
-
-    do i = 2,n 
-       g_rmm(i) = (crmm(i)  +  grmm(i) )/dr(i)  + 1
-    end do   !  i
-    ! print the results
-    do i = 2,n
-        write(10,*)dr(i),g_rmm(i) 
-        write(20,*)dr(i),grmm(i)/dr(i) 
-        write(30,*)dr(i),crmm(i)/dr(i) 
-        write(40,*)dr(i),(grmm(i) + crmm(i))/dr(i) 
+    !call evolution()
+    do i = 1,n
+        b1(i) = (i - 1)
     end do
-    print *,"time cost is ",t2 - t1
+    call fft(b1,b2)
+    print *,"     b2    "
+    do i = 1,n
+        print *,b2(i)
+    end do
+    !call fft(a1,a2,a3,a4)
+    !call fft(a3,a4,b,c)
+    !do i = 1,n
+    !    write(*,"(i4,6f12.5)")i,a1(i),a2(i),a3(i),a4(i),b(i),c(i)
+    !end do
 
-    close(10)
-    close(20)
-    close(30)
+
+    close(50)
     close(40)
-    
-    !************ check the result *************************
-    write(50,*)ch_b,"test",ch_b,ch_b,"grmm"
-    do i = 2,n
-        write(50,"(2f18.10)")test(i)/dr(i),grmm(i)/dr(i)
-    end do
-    !******************************************************
+    close(30)
+    close(20)
+    close(10)
     !print *,hkmm(10)
 end program main
-!test the fst program{{{
-    !do i = 1,n
-    !    a(i) = (i - 1)*1.0
-    !end do
-    !write(*,*)"before forward backward fft"
-    !b = fst(a,n,l,1)
-    !c = fst(b,n,l,-1)
-    !do i = 1,n
-    !    write(*,"(i3,3f18.9)")i,a(i),b(i),c(i)
-    !end do
-!}}}
-!{{{
-    !!*******************************************
-    !!***test the answer*************************
-    !lambda1 = 0
-    !lambda2 = 0
-    !do i = 1,n
-    !    xtmp = hkmm(i) - ckmm(i) - rhom*ckmm(i)*hkmm(i)
-    !    ytmp = crmm(i) + dr(i) + grmm(i)
-    !    write(50,*)xtmp,ytmp
-    !    lambda1 = lambda1 + abs(xtmp)
-    !    lambda2 = lambda2 + abs(ytmp)
-    !end do
-    !lambda1 = lambda1/dble(n)
-    !lambda2 = lambda2/dble(n)
-    !write(50,*)"lambda1 = ",lambda1
-    !write(50,*)"lambda2 = ",lambda2
-    !!*******************************************
+!before {{{
+!********************************************************** 
+
+!        print *,"lambda is ",lambda
+!        !  write ck to the file
+!        crff(:) = crffb(:) + crffc(:)
+!        grff(:) = grffb(:) + grffc(:)
+!        do i = 1,n
+!           g_rmm(i) = (crmm(i)  +  grmm(i) )/dr(i)  + 1
+!           g_rfm(i) = (crfm(i)  +  grfm(i) )/dr(i)  + 1
+!           g_rff(i)=  (crff(i)  +  grff(i) )/dr(i)  + 1
+!        end do   !  i
+!        do i = 1,n
+!            write(10,*)dr(i),g_rmm(i) 
+!            write(20,*)dr(i),g_rfm(i) 
+!            write(30,*)dr(i),g_rffb(i) 
+!            write(40,*)dr(i),g_rff(i)
+!        end do
+!        write(50,*)"times  = ",times
+!        write(50,*)"lambda = ",lambda
 !}}}
