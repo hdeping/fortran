@@ -1,23 +1,19 @@
 program main
     use module_common
     implicit none
-    real(8)           :: force(3)
-    real(8)           :: a(3) 
-    real(8)           :: b(3) 
-    real(8)           :: t1
-    real(8)           :: t2
-    real(8)           :: force_new
-
-
-    a = (/1.0,3.0,4.0/)
-    b = (/2.0,6.0,9.0/)
-
-    call cpu_time(t1)
-    force  = getintegral(a,b)
-    call cpu_time(t2)
-    print *,"time cost is ",t2 - t1
-    print *,"force = ",force
-    force_new = sqrt((force(1))**2.0 + (force(2))**2.0 + (force(1))**2.0)
-    print *,"scalar force is ",force_new
-
+    
+    do i = 1,m
+        x(i) = 1D-2*dble(i)
+    enddo !cycle ends
+    y = laguerre(x) 
+    do i = 1,m
+        write(filename,"('laguerre',i3.3,'.txt')")i
+        !write(filename,"('legendre',i3.3,'.txt')")i
+        open(10,file = filename)
+        do j = 1,n
+            write(10,*)j,y(j,i)
+        enddo !cycle ends
+        close(10) 
+    enddo !cycle ends
+     
 end program main
