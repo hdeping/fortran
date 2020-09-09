@@ -1,6 +1,6 @@
 module module_laplace
     implicit none
-    integer,parameter            :: n   = 10
+    integer,parameter            :: n   = 1
     integer,parameter            :: num = 1000
     real(8),parameter            :: dt  = 1E-2
     real(8),parameter            :: ln2 = log(2.0)
@@ -29,8 +29,8 @@ subroutine get_inver()
 
     facn  = factorial(n)
     call getmatA()
-    x   = dt
-    tmp = lap_inver(x)
+    x          = dt
+    tmp        = lap_inver(x)
     write(10,"(2f18.6)")x,1.0
     do ii = 2,num
         x           = dt*ii
@@ -91,7 +91,7 @@ end subroutine getmatA
 function fun(x)
     real(8),intent(in)               :: x
     real(8)                          :: fun
-    fun = 1.0/(x**3.0)
+    fun = 1.0/(x + 2.0)
 end function fun
 !}}}
 !function symbol{{{
