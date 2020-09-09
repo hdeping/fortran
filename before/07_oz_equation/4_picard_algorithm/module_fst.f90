@@ -10,10 +10,10 @@ integer                       :: i, j
 real*8, dimension(0:n-1)      :: id
 real*8, dimension(0:n-1)      :: tbr, tbi, tor, toi
 real*8, dimension(0:n-1)      :: fst
-real*8                        :: dr, dk, th
-
-dr=0.05
-dk=(pi/dble(n))/dr
+real*8                        :: th
+!%%%%%%%%%%%%%%%%%%NOTICE%%%%%%%%%%%%%%%%%%%%!
+!    dr should be equal to deltar
+!%%%%%%%%%%%%%%%%%%NOTICE%%%%%%%%%%%%%%%%%%%%!
 
 tbr(0)=0.0
 tbi=0.0
@@ -32,10 +32,10 @@ do j=1, n/2-1
 enddo
 
 if (ju==1) then
-    th=4.0*dr*pi
+    th=4.0*deltar*pi
     fst(:)=th*fst(:)
 elseif (ju==-1) then
-    th=dk/(2.0*(pi**2.))
+    th=deltak/(2.0*(pi**2.))
     fst(:)=th*fst(:)
 endif
 
@@ -80,6 +80,65 @@ end function fst
 !
 !end function fst
 !!}}}
+!function may{{{
+function may(d)
+    real(8),intent(in)         :: d
+    real(8)                    :: may(n)
+    integer                    :: ii
+    do ii = 1,n
+        if(dr(ii) < d)then
+             may(ii) = - 1
+         else
+             may(ii) = 0
+         endif
+    end do
+end function may
+!}}}
+!function judge{{{
+function judge(a,b)
+    real(8),intent(in)      :: a(n)
+    real(8),intent(in)      :: b(n)
+    real(8)                 :: judge
+    integer                 :: ii
+    
+    judge = 0
+    do ii = 1,n 
+        judge = judge + abs(a(ii) - b(ii))
+    end do
+    judge = judge/dble(n)
+    
+end function judge
+!}}}
+!subroutine evolution{{{
+subroutine evolution()
+    times = 0
+    ckmm = 1.0
+    do 
+        test = ckmm
+        gkmm(1) = 0.0
+        do i = 2,n
+            gkmm(i) = rhom*ckmm(i)**2.0/(dk(i) - rhom*ckmm(i))
+        end do
+        ! inverse fft to calculate grmm
+        grmm = fst(gkmm,- 1)
+        ! calculate crmm with PY closure
+        do i = 1,n
+            crmm(i) = (dr(i) + grmm(i))*maymm(i)
+        end do
+        ! fft to calculate ckmm
+        ckmm = fst(crmm,1)
+        ! judge the convergence
+        lambda = judge(test,ckmm)
+        if(lambda < error)exit
+        times = times + 1
+
+        !if(times > int(1E4))exit
+        if(mod(times,10) == 0)then
+            print *,lambda
+        endif
+    end do
+end subroutine evolution
+!}}}
 ! fft相关子程序,包括:
 !                       fft: 一维快速傅立叶变换
 !                      ifft: 一维快速傅立叶逆变换
