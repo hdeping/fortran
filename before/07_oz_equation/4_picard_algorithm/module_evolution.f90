@@ -1,23 +1,44 @@
 module module_evolution
       use module_fst
+      implicit none
       contains
 !subroutine evolution{{{
 subroutine evolution()
+    integer                :: jj
+
    print *,"other solutions" 
+   !!!!!!!!***********************************
+    !  get crffb
+    do i = 1,n
+        if(dr(i) < dff)then
+            crffb(i) = dr(i) + crmm(i) + grmm(i)
+        else
+            crffb(i) = crmm(i)
+        endif
+    end do
+    ckffb = fst(crffb, 1)
+    filename = "rate.txt"
+    open(90,file = filename)
+    ckfm = 1.0
+    ckff = 1.0
+    !***********************************
     do  
-        test = ckfm 
+        test  = ckfm 
+        test1 = ckff
         gkfm(1) = 0.0
         gkff(1) = 0.0
         do   jj = 2,n 
-            chik      = dk(jj) + rhom*hkmm(jj)
-            gkfm(jj)  = ckfm(jj)*chik/(dk(jj) - rhof*&
-                        ckff(jj) + rhof*ckffb(jj)) -ckfm(jj)
-            gkff(jj)  = (dk(jj)**2*ckff(jj) + rhom*&
-                        ckfm(jj)**2 - dk(jj)*rhof *(ckff(jj) &
-                        - ckffb(jj))**2)/(dk(jj) - rhof*ckff(jj)&
-                        + rhof*ckffb(jj)) - ckff(jj)
-            gkffb(jj) = (dk(jj)**2*ckff(jj) + rhom*ckfm(jj)**2)/&
-                        (dk(jj) - rhof*ckff(jj) +rhof*ckffb(jj)) - ckffb(jj)
+        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            ckffc(jj) = ckff(jj) - ckffb(jj)
+            hkffc(jj) = dk(jj)*ckffc(jj)/(dk(jj) - rhom*ckffc(jj))
+            hkfm(jj)  = (dk(jj)*ckfm(jj) + rhom*ckfm(jj)*hkmm(jj))/&
+                        (dk(jj) - rhof*ckffc(jj))
+            hkffb(jj) = (dk(jj)*ckffb(jj) + rhom*ckfm(jj)*hkfm(jj) + &
+                        rhof*ckffb(jj)*hkffc(jj))/(dk(jj) - rhof*ckffc(jj))
+            gkffc(jj) = hkffc(jj) - ckffc(jj)
+            gkffb(jj) = hkffb(jj) - ckffb(jj)
+            gkfm(jj)  = hkfm(jj)  - ckfm(jj)
+            gkff(jj)  = gkffc(jj) + gkffb(jj)
         end do
         ! inverse fft to calculate grfm and grff
         grfm  = fst(gkfm, - 1)
@@ -28,22 +49,38 @@ subroutine evolution()
         do i = 1,n
             crfm(i) = (dr(i) + grfm(i))*mayfm(i)
             crff(i) = (dr(i) + grff(i))*mayff(i)
-            !***************************** Mention *********
-            crffb(i) = (dr(i) + grmm(i))*mayff(i)
-            !***************************** Mention *********
         end do
+
         !   fft to calculate ckfm and ckff
         ckfm  = fst(crfm,1)
         ckff  = fst(crff,1)
-        gkffb = fst(grffb,- 1)
         ! judge the convergence and exit the cycle
-        lambda = judge(test,ckfm)
-        times = times + 1
-        print *,lambda
-        if(mod(times,fre) == 0)then
-            print *,"lambda = ",lambda
+
+        if(times == 100)then
+        do jj = 1,100
+            rate = jj*0.01
+            lambda  = setion_rate(test ,ckfm,rate)
+            lambda1 = setion_rate(test1,ckff,rate)
+            write(90,*)rate,lambda,lambda1
+        end do
         endif
-        if(times == 1400)exit
+        lambda  = setion_rate(test ,ckfm,rate)
+        lambda1 = setion_rate(test1,ckff,rate)
+
+        !lambda  = conver(test ,ckfm)
+        !lambda1 = conver(test1,ckff)
+
+        !lambda  = bisetion(test ,ckfm)
+        !lambda1 = bisetion(test1,ckff)
+
+        !lambda2 = conver(test,ckffb)
+        lambda = max(lambda,lambda1)
+        times = times + 1
+        !print *,lambda
+        if(mod(times,fre) == 0)then
+            print *,times,"lambda = ",lambda
+        endif
+        !if(times == 3000)exit
         if(lambda < error)exit
         !times = times + 1
         !if (mod(times,1000) == 0)then
@@ -51,6 +88,7 @@ subroutine evolution()
         !    pause
         !endif
     end do
+    close(90)
 end subroutine evolution
 !}}}
 !subroutine evolution_gr{{{
@@ -92,10 +130,11 @@ end subroutine evolution_gr
 !subroutine evolution_mm{{{
 ! iteration method to solve OZ equation
 subroutine evolution_mm()
+    integer                     :: jj
     print *,"get hkmm"
     times = 0
+    ! initial ckmm
     ckmm = 1.0
-    call cpu_time(t1)
     do 
         test    = ckmm
         test_cr = crmm
@@ -115,7 +154,7 @@ subroutine evolution_mm()
         ! get a mean value of ckmm  (golden setion)
          times = times + 1
 
-        lambda = judge(test,ckmm)
+        lambda = setion_rate(test,ckmm,0.99)
         !if(times > int(1E4))exit
         if(mod(times,1000) == 0)then
             print *,"lambda = ",lambda
@@ -144,6 +183,8 @@ function may(d)
     end do
 end function may
 !}}}
+!***********************************************
+!  different methods for judging convergence 
 !function judge{{{
 ! compare the difference between two arrays
 ! judge the convergence
@@ -178,6 +219,24 @@ function bisetion(a,b)
     
 end function bisetion
 !}}}
+!function setion_rate{{{
+! compare the difference between two arrays
+! judge the convergence
+function setion_rate(a,b,setion)
+    real,intent(in)         :: setion
+    real(8),intent(in)      :: a(n)
+    real(8),intent(inout)   :: b(n)
+    real(8)                 :: setion_rate
+    integer                 :: ii
+    
+    do ii = 1,n 
+        b(ii) = b(ii)*(1.0 - setion) + a(ii)*setion
+    end do
+    setion_rate = judge(a,b)
+    !judge = judge/dble(n)
+    
+end function setion_rate
+!}}}
 !function conver{{{
 !  judge convergence with golden setion 
 function conver(a,b)
@@ -204,86 +263,50 @@ function conver(a,b)
     
 end function conver
 !}}}
-!subroutine check_gr {{{
+!subroutine check_ck{{{
 ! check if the result is the solution to 
 ! the OZ equation
-subroutine check_gr()
+subroutine check_ck()
+    integer                :: jj
 
     filename = "check.txt"
     open(50,file = filename)
-!{{{Read data
-   ! filename = "gr.txt"
-   ! open(60,file = filename,status = "old",iostat = ierror)
 
-    ! read c(r) from file
-   ! grmm(1) = 0.0
-   ! do i = 2,n
-   !     read(60,*,iostat = ierror)tmp,ctmp
-   !     grmm(i) = ctmp*dr(i) 
-   ! end do
-!}}}
-    ! calculate crmm with PY closure 
+    gkfm(1) = 0.0
+    gkff(1) = 0.0
+    do   jj = 2,n 
+        ckffc(jj) = ckff(jj) - ckffb(jj)
+        hkffc(jj) = dk(jj)*ckffc(jj)/(dk(jj) - rhom*ckffc(jj))
+        hkfm(jj)  = (dk(jj)*ckfm(jj) + rhom*ckfm(jj)*hkmm(jj))/&
+                    (dk(jj) - rhof*ckffc(jj))
+        hkffb(jj) = (dk(jj)*ckffb(jj) + rhom*ckfm(jj)*hkfm(jj) + &
+                    rhof*ckffb(jj)*hkffc(jj))/(dk(jj) - rhof*ckffc(jj))
+        gkffc(jj) = hkffc(jj) - ckffc(jj)
+        gkffb(jj) = hkffb(jj) - ckffb(jj)
+        gkfm(jj)  = hkfm(jj)  - ckfm(jj)
+        gkff(jj)  = gkffc(jj) + gkffb(jj)
+    end do
+    ! inverse fft to calculate grfm and grff
+    grfm  = fst(gkfm, - 1)
+    grff  = fst(gkff, - 1)
+    grffb = fst(gkffb,- 1)
+    !grffb = fst(gkffb,- 1)
+    !  calculate crfm and crff with PY closure
     do i = 1,n
-       crmm(i) = (dr(i) + grmm(i))*maymm(i)
+        crfm(i) = (dr(i) + grfm(i))*mayfm(i)
+        crff(i) = (dr(i) + grff(i))*mayff(i)
     end do
-    ! calculate ckmm with fft
-    ckmm = fst(crmm, 1)
-    ! calculate gkmm with OZ equation
-    gkmm(1) = 0.0
+
+    !   fft to calculate ckfm and ckff
+
+    test  = fst(crfm,1)
+    test1 = fst(crff,1)
     do i = 2,n
-        gkmm(i) = rhom*ckmm(i)**2.0/(dk(i) - rhom*ckmm(i))   
-    end do
-    ! calculate a new grmm(represented by test)
-    test = fst(gkmm,- 1)
-    write(50,*)"test           ","            grmm"
-    do i = 2,n
-        write(50,"(3f18.10)")dr(i),test(i)/dr(i),grmm(i)/dr(i)
+        write(50,"(3f18.10)")dr(i),test(i)/dr(i),ckfm(i)/dr(i)
     end do
 
     close(50)
    ! close(60)
-end subroutine check_gr
-!}}}
-!subroutine check_ck {{{
-! check if the result is the solution to 
-! the OZ equation
-subroutine check_cr()
-
-    filename = "check.txt"
-    open(50,file = filename)
-!Read data{{{
-   ! filename = "gr.txt"
-   ! open(60,file = filename,status = "old",iostat = ierror)
-
-    ! read c(r) from file
-   ! grmm(1) = 0.0
-   ! do i = 2,n
-   !     read(60,*,iostat = ierror)tmp,ctmp
-   !     grmm(i) = ctmp*dr(i) 
-   ! end do
-!}}}
-    ! calculate gkmm with OZ equation
-    gkmm(1) = 0.0
-    do i = 2,n
-        gkmm(i) = rhom*ckmm(i)**2.0/(dk(i) - rhom*ckmm(i))   
-    end do
-    ! calculate a new grmm(represented by test)
-    grmm = fst(gkmm, - 1)
-    ! calculate crmm with PY closure 
-    do i = 1,n
-       crmm(i) = (dr(i) + grmm(i))*maymm(i)
-    end do
-    ! calculate ckmm with fft
-    test = fst(crmm, 1)
-
-    write(50,*)"test           ","grmm"
-    do i = 2,n
-        write(50,"(3f18.10)")dr(i),test(i)/dr(i),ckmm(i)/dr(i)
-    end do
-
-
-    close(50)
-   ! close(60)
-end subroutine check_cr
+end subroutine check_ck
 !}}}
 end module module_evolution
