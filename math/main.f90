@@ -1,29 +1,23 @@
 program main
     use module_common
     implicit none
-    real(8)               :: a
-    real(8)               :: b
-    real(8)               :: length
+    real(8)           :: force(3)
+    real(8)           :: a(3) 
+    real(8)           :: b(3) 
+    real(8)           :: t1
+    real(8)           :: t2
+    real(8)           :: force_new
 
-    filename = "data.txt"
-    open(10,file = filename)
 
-    !a = 1.0
-    !b = 1.0
-    !length = getlength(a,b)
-    !print *,length*2.0
-    do i = 1,n
-        !call cpu_time(t1)
-        do j = 1,n
-            a      = 2D-2*dble(i)
-            b      = 2D-2*dble(j)
-            length = getlength(a,b)
-            write(10,*)a,b,length
-        enddo !cycle ends
-        !call cpu_time(t2)
-        !print *,"time cost is ",t2 - t1
-    enddo !cycle ends
-    
+    a = (/1.0,3.0,4.0/)
+    b = (/2.0,6.0,9.0/)
 
-    close(10)
+    call cpu_time(t1)
+    force  = getintegral(a,b)
+    call cpu_time(t2)
+    print *,"time cost is ",t2 - t1
+    print *,"force = ",force
+    force_new = sqrt((force(1))**2.0 + (force(2))**2.0 + (force(1))**2.0)
+    print *,"scalar force is ",force_new
+
 end program main
