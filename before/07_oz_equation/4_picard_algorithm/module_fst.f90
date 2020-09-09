@@ -1,6 +1,5 @@
 module module_fst
-    use module_common
-
+     use module_common
 contains
 
 !function fst{{{
@@ -80,6 +79,80 @@ end function fst
 !
 !end function fst
 !!}}}
+!function may{{{
+function may(d)
+    real(8),intent(in)         :: d
+    real(8)                    :: may(n)
+    integer                    :: ii
+    do ii = 1,n
+        if(dr(ii) < d)then
+             may(ii) = - 1
+         else
+             may(ii) = 0
+         endif
+    end do
+end function may
+!}}}
+!function judge{{{
+function judge(a,b)
+    real(8),intent(in)      :: a(n)
+    real(8),intent(in)      :: b(n)
+    real(8)                 :: judge
+    integer                 :: ii
+    
+    judge = 0
+    do ii = 1,n 
+        judge = judge + abs(a(ii) - b(ii))
+    end do
+    judge = judge/dble(n)
+    
+end function judge
+!}}}
+!subroutine evolution{{{
+subroutine evolution()
+    times = 0
+    ckmm = 1.0
+    do 
+        test = ckmm
+        gkmm(1) = 0.0
+        do i = 2,n
+            gkmm(i) = rhom*ckmm(i)**2.0/(dk(i) - rhom*ckmm(i))
+        end do
+        ! inverse fft to calculate grmm
+        grmm = fst(gkmm,- 1)
+        ! calculate crmm with PY closure
+        do i = 1,n
+            crmm(i) = (dr(i) + grmm(i))*maymm(i)
+        end do
+        ! fft to calculate ckmm
+        ckmm = fst(crmm,1)
+        ! judge the convergence
+        ! get a mean value of ckmm
+        do i = 1,n
+            test1(i) = test(i)*gold + ckmm(i)*(1.0 - gold)
+            test2(i) = test(i)*(1.0 - gold) + ckmm(i)*gold 
+        end do
+        
+        
+        lambda1 = judge(test,test1)
+        lambda2 = judge(test,test2)
+        if(lambda1 < lambda2)then
+            ckmm   = test1
+            lambda = lambda1
+        else
+            ckmm   = test2
+            lambda = lambda2
+        endif
+        times = times + 1
+
+        !if(times > int(1E4))exit
+        if(mod(times,100) == 0)then
+            print *,"lambda  = ",lambda
+        endif
+        if(lambda < error)exit
+    end do
+end subroutine evolution
+!}}}
 ! fft相关子程序,包括:
 !                       fft: 一维快速傅立叶变换
 !                      ifft: 一维快速傅立叶逆变换
