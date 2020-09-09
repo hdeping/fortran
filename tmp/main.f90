@@ -1,16 +1,18 @@
 program main
+    use module_common
+    use omp_lib
     implicit none
-    integer,parameter         :: n = 10
-    integer   i,j,k
+    real(8)             a(n,n)
+    real(8)             b(n,n)
+    real(8)             c(n,n)
 
-    do i = 1,n
-        do j = 1,n 
-            do k = 1,n
-                print *,i+j+k
-            enddo !cycle ends
-             
-        enddo !cycle ends
-         
+    !$omp parallel
+    do i = 1,10
+        j = omp_get_num_threads()
+        write(*,*)"Hello,world"
+        write(*,*)"j = ",j
+        call sleep(10)
     enddo !cycle ends
-     
+    !$omp end parallel
+
 end program main
