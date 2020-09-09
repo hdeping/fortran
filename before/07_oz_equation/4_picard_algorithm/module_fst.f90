@@ -1,5 +1,6 @@
 module module_fst
     use module_common
+    implicit none
 
 contains
 
@@ -80,69 +81,6 @@ end function fst
 !
 !end function fst
 !!}}}
-!function may{{{
-function may(d)
-    real(8),intent(in)         :: d
-    real(8)                    :: may(n)
-    integer                    :: ii
-    do ii = 1,n
-        if(dr(ii) < d)then
-             may(ii) = - 1
-         else
-             may(ii) = 0
-         endif
-    end do
-end function may
-!}}}
-!function judge{{{
-function judge(a,b)
-    real(8),intent(in)      :: a(n)
-    real(8),intent(in)      :: b(n)
-    real(8)                 :: judge
-    integer                 :: ii
-    
-    judge = 0
-    do ii = 1,n 
-        judge = judge + abs(a(ii) - b(ii))
-    end do
-    judge = judge/dble(n)
-    
-end function judge
-!}}}
-!subroutine evolution{{{
-subroutine evolution()
-    times = 0
-    ckmm = 1.0
-    do 
-        test = ckmm
-        gkmm(1) = 0.0
-        do i = 2,n
-            gkmm(i) = rhom*ckmm(i)**2.0/(dk(i) - rhom*ckmm(i))
-        end do
-        ! inverse fft to calculate grmm
-        grmm = fst(gkmm,- 1)
-        ! calculate crmm with PY closure
-        do i = 1,n
-            crmm(i) = (dr(i) + grmm(i))*maymm(i)
-        end do
-        ! fft to calculate ckmm
-        ckmm = fst(crmm,1)
-        ! judge the convergence
-        ! get a mean value of ckmm
-        do i = 1,n
-            ckmm(i) = (ckmm(i) + test(i))/2.0
-        end do
-        lambda = judge(test,ckmm)
-        times  = times + 1
-
-        !if(times > int(1E4))exit
-        if(mod(times,10) == 0)then
-            print *,"lambda  = ",lambda
-        endif
-        if(lambda < error)exit
-    end do
-end subroutine evolution
-!}}}
 ! fft相关子程序,包括:
 !                       fft: 一维快速傅立叶变换
 !                      ifft: 一维快速傅立叶逆变换
@@ -192,11 +130,13 @@ end subroutine fft
 !subroutine getfftfreq{{{
 subroutine getfftfreq(length,freq)
 ! 求fft输出顺序相应频率
-real*8    freq(n)
-do i=0,n-1
-    flag=i
-    if(i>n/2) flag=i-n    
-    freq(i+1)=flag*2*pi/n
+integer   flag
+real*8    length
+real*8    freq(length)
+do i = 0,n - 1
+    flag = i
+    if(i > length/2) flag = i- length
+    freq(i + 1) = flag*2*pi/length
 end do !i
 end subroutine getfftfreq
 !}}}
