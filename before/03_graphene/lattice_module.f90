@@ -5,7 +5,7 @@ use common_module
 contains
 !*******************************************************************
 subroutine update()
-integer flag,loc,flag1,ii,value
+integer flag,loc,flag1
 
 do ii = pos_graphene,nx_ltc
     ! 更新完整的graphene界面位置
@@ -16,30 +16,24 @@ do ii = pos_graphene,nx_ltc
             if(growthStatus(ii,jj)>0) cnt_growth(growthStatus(ii,jj)) = cnt_growth(growthStatus(ii,jj))+1.
         enddo !jj
     endif
-    do jj = 1,ny_ltc                                                 ! 更新x方向最大占据位置
+    do jj = 1,ny_ltc
+        ! 更新x方向最大占据位置
         if(status(ii,jj) = =1.and.ii>pos_front) pos_front=ii
-     enddo                                                       !jj
-enddo                                                           !ii    ! 更新当前可被占据的Ci构型列表,构型限制在同一列，列表给出的位置为构型的第一个C位置，要求可用构型纵向坐标不能超过临列已占据的坐标
+     enddo !jj
+enddo !ii
+! 更新当前可被占据的Ci构型列表,构型限制在同一列，列表给出的位置为构型的第一个C位置，要求可用构型纵向坐标不能超过临列已占据的坐标
 n_cfgH = 0
 n_cfgT = 0
-do ii = pos_graphene,nx_ltc                                    !pos_graphene+4 !pos_front+1,修改于2014-8-12,
-    do jj = 1,ny_ltc                                                ! 这两重循环为遍历生长区域内所有点
-        do j_c = 1,6                                                ! 这重循环为遍历以(ii,jj)点为起点的所有ci簇
+do ii = pos_graphene,pos_front+1    !pos_graphene+4 !pos_front+1
+    do jj = 1,ny_ltc                    ! 这两重循环为遍历生长区域内所有点
+        do j_c = 1,6                    ! 这重循环为遍历以(ii,jj)点为起点的所有ci簇
             flag = 0
-            do jj_c = 1,j_c                                       ! 这重循环遍历当前构型包含的所有位点
+            do jj_c = 1,j_c            ! 这重循环遍历当前构型包含的所有位点
                 loc = jj+jj_c-1
-                if(loc>ny_ltc)then
-                    loc = mod(loc,ny_ltc)                
-                    if(loc = =0)loc=ny_ltc
-                endif
-                value = ii
-                if(value>ny_ltc)then
-                    value = mod(value,ny_ltc)
-                    if(value = =0)value=ny_ltc
-                endif
-                if(status(ii,loc) = =1) goto 100                  ! 若该位置被占据，则当前ci构型不可用且所有i更大的ci构型都不可用
-                if(status(ii-1,loc)/ = 1) goto 100                ! 检查当前点是否超过临列已占据的坐标
-                call getSiteType(ii,loc)                        ! 记录该构型包含多少高能量位
+                if(loc>ny_ltc) loc = loc-ny_ltc
+                if(status(ii,loc) = =1) goto 100                        ! 若该位置被占据，则当前ci构型不可用且所有i更大的ci构型都不可用
+                if(status(ii-1,loc)/ = 1) goto 100                    ! 检查当前点是否超过临列已占据的坐标
+                call getSiteType(ii,loc)                            ! 记录该构型包含多少高能量位
                 if(mod(ii+loc,2) = =0) flag=flag+type_site
                 if(type_site = =1.and.j_c==1) then
                     call getSiteClass(ii,jj)
@@ -79,7 +73,7 @@ do ii = pos_graphene,nx_ltc                                    !pos_graphene+4 !
 enddo !ii
 n_cfgH_D = 0
 n_cfgT_D = 0
-do ii = pos_graphene,nx_ltc-1           ! 原为pos_front+1,修改于2014-8-12
+do ii = pos_graphene,pos_front+1
     do jj = 1,ny_ltc                    ! 这两重循环为遍历生长区域内所有点
         do j_c = 1,6                    ! 这重循环为遍历以(ii,jj)点为起点的所有ci簇
             flag = 0
@@ -118,30 +112,18 @@ subroutine getSiteClass(i,j)
 ! 检查当前点的分类，class_site = 3: body; 2: surface; 1: active; 0: inactive
 integer i,j,ss(3)
 ! neighbor 1
-if(j = =1)then                                        !此处改为2013-12-3 18：59
-    ss(1) = status(i,ny_ltc)
-else
 ss(1) = status(i,j-1)
-endif
+if(j = =1) ss(1)=status(i,ny_ltc)
 ! neighbor 2
-if(j = =ny_ltc)then
-    ss(2) = status(i,1)
-else
 ss(2) = status(i,j+1)
-endif
+if(j = =ny_ltc) ss(2)=status(i,1)
 ! neighbor 3
-if(mod(i+j,2) = =0) then                              !此处改为2013-12-3 18：59
-    if(i = =1)then
-        ss(3) = 1
-    else
+if(mod(i+j,2) = =0) then
     ss(3) = status(i-1,j)
-    endif 
+    if(i = =1) ss(3)=1
 else
-    if(i = =nx_ltc)then
-        ss(3) = 0
-    else
     ss(3) = status(i+1,j)
-    endif
+    if(i = =nx_ltc) ss(3)=0
 endif
 class_site = sum(ss)
 n_neighbor = sum(ss)
@@ -177,30 +159,16 @@ subroutine getNeighbors(i,j)
 ! get neighbors of site(i,j)
 integer    i,j
 ! neighbor 1
-if(j = =1) then
-    Neighbors(1,:) = (/i,ny_ltc/)                                  !修改于2014-8-14
-else
 Neighbors(1,:) = (/i,j-1/)
-endif
+if(j = =1) Neighbors(1,:)=(/i,ny_ltc/)
 ! neighbor 2
-if(j = =ny_ltc) then
-    Neighbors(2,:) = (/i,1/)
-else
 Neighbors(2,:) = (/i,j+1/)
-endif
+if(j = =ny_ltc) Neighbors(2,:)=(/i,1/)
 ! neighbor 3
-if(mod(i+j,2) = =0) then                                          !此处于2013-12-3 18：52修改
-    if(i = =1)then
-     Neighbors(3,:) = (/nx_ltc,j/)   
-    else
+if(mod(i+j,2) = =0) then
     Neighbors(3,:) = (/i-1,j/)
-    endif
 else
-    if(i = =nx_ltc)then
-    Neighbors(3,:) = (/nx_ltc,j/)    
-    else
     Neighbors(3,:) = (/i+1,j/)
-    endif
 endif
 endsubroutine getNeighbors
 !*******************************************************************

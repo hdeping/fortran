@@ -1,31 +1,39 @@
 Module Event_Module
 
-integer jfg_pause
+Integer jfg_pause
 
 Contains
 
   Subroutine PauseProgram( jUnit, jEvent, jKeyState, ix, iy )
-  USE DFLIB
-  integer    jUnit, jEvent, jKeyState, ix, iy
+  USE MSFLIB
+  Integer    jUnit, jEvent, jKeyState, ix, iy
 
-  j1  =  jUnit ; j2 = jEvent ; j3 = jKeyState ; j4 = ix ; j5 = iy
+  j1  =  jUnit 
+  j2  = jEvent 
+  j3  = jKeyState 
+  j4  = ix 
+  j5  = iy
   
   jfg_pause  =  1
   
   End Subroutine PauseProgram
 
   Subroutine PauseProgram2( jUnit, jEvent, jKeyState, ix, iy )
-  USE DFLIB
-  integer    jUnit, jEvent, jKeyState, ix, iy
+  USE MSFLIB
+  Integer    jUnit, jEvent, jKeyState, ix, iy
 
-  j1  =  jUnit ; j2 = jEvent ; j3 = jKeyState ; j4 = ix ; j5 = iy
+  j1  =  jUnit 
+  j2  = jEvent 
+  j3  = jKeyState 
+  j4  = ix 
+  j5  = iy
   
   jfg_pause  =  2
   
   End Subroutine PauseProgram2
     
     Subroutine SaveSpiral2File( NN, xyAry, nSpiral, jf_pause )
-    integer    NN, nSpiral, jf_Pause
+    Integer    NN, nSpiral, jf_Pause
     Real       xyAry( NN, NN )
 
     Character  fName * 20
@@ -51,8 +59,4 @@ Contains
 
     Return
     End Subroutine SaveSpiral2File
-
-
-
-
 End Module Event_Module  

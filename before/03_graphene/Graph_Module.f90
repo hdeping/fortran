@@ -1,20 +1,20 @@
 !! This Module Defines Some Common-Used Customizer Graphic Modules
 Module Graph_Module
-Use DFLIB
+Use MSFLIB
 use common_module
 use lattice_module
 
 ! Definitions of Globally Used Variables for Graphic Settings -------
-  integer g_xLeft, g_yLeft, g_xRight, g_yRight    ! g --> Global
-  integer g_jColor
-  integer g_xLeft1, g_yLeft1, g_xRight1, g_yRight1    ! g --> Global
+  Integer g_xLeft, g_yLeft, g_xRight, g_yRight    ! g --> Global
+  Integer g_jColor
+  Integer g_xLeft1, g_yLeft1, g_xRight1, g_yRight1    ! g --> Global
 
   Type (WindowConfig) thisScreen
   Type (QWInfo)       theFrame, theChild 
 
 ! Define my Own Color Palette for 16 Colors --------------
 
-  integer :: myColor(16) = (/ #000000,   &        ! Black
+  Integer :: myColor(16) = (/ #000000,   &        ! Black
                               #FFFFFF,   &        ! Bright White
                                  #000080,   &        ! DULL Red  
                               #0000FF,   &        ! Bright Red
@@ -35,11 +35,11 @@ Contains
 
 ! Set the Screen Resolution and Color -------------------------------
 Subroutine InitGraphWindow( jColor )
-USE DFLIB
-integer jColor                
+USE MSFLIB
+Integer jColor                
 
 Logical StatusMode
-integer oldColor, retInt
+Integer oldColor, retInt
 
 theFrame.type = QWIN$SET
 theFrame.x    = 100
@@ -74,8 +74,8 @@ End Subroutine InitGraphWindow
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Set the Window Region for the Graphics ----------------------------
 Subroutine SetGraphWindow( x1, y1, x2, y2 )
-Use DFLIB
-integer*2    x1, y1, x2, y2
+Use MSFLIB
+Integer    x1, y1, x2, y2
 
 g_xLeft  = x1 ; g_yLeft  = y1 
 g_xRight = x2 ; g_yRight = y2                                
@@ -88,9 +88,9 @@ End Subroutine SetGraphWindow
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Subroutine Draw2DLattic_Hexagon(ii, jj, jColor,flag) 
 
-integer  jColor,ii,jj
+Integer  jColor,ii,jj
 integer     flag                ! 0为空心，其他为实心
-integer(2)  x1,x2,y1,y2,jRet,inte
+Integer  x1,x2,y1,y2,jRet,inte
 
 x1 = g_xLeft ; x2 = g_xRight ; y1 = g_yLeft ; y2 = g_yRight
 !! Draw the site  -------------------
@@ -117,11 +117,10 @@ endif
 End Subroutine Draw2DLattic_Hexagon
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 Subroutine Draw2DLattic_Hexagon_line(i,j,ii,jj,jColor ) 
-!USE DFLIB
+!USE MSFLIB
 
-integer  jColor,i,j,ii,jj
-integer(2) x2,y2
-integer  x1,y1,jRet,inte,dummy
+Integer  jColor,i,j,ii,jj
+Integer  x1,x2,y1,y2,jRet,inte,dummy
 Type  (XYCOORD ) xyPos1
 
 if(j==1.and.jj==ny_ltc) return
@@ -227,23 +226,15 @@ enddo !i
 end subroutine DrawBonds
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 subroutine redraw(i_s,i_e)
-integer i_s,i_e,nei(2),i_s1,ii,times
+integer i_s,i_e,nei(2),i_s1
 
 i_s1=i_s-6
 if(i_s1<0) i_s1=1
-do i=i_s1,nx_ltc                                   !修改于2014-8-12,原为i_e
+do i=i_s1,i_e
     do j=1,ny_ltc
         call getNeighbors(i,j)
         do ii=1,3
-            do times=1,2,1
-            nei(times)=Neighbors(ii,times)
-            enddo
-           do iii=1,2
-               if(nei(iii)==0)then
-                   print *,iii,nei(iii)
-                   pause 'error'
-                   endif
-               enddo
+            nei=Neighbors(ii,:)
             if(status(i,j)==1.and.status(nei(1),nei(2))==1) then
                 call Draw2DLattic_Hexagon_line(i,j,nei(1),nei(2),color_bond) 
             else    
