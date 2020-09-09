@@ -9,7 +9,10 @@ module module_common
     integer,parameter            :: nfre  = n/nnum
     integer,parameter            :: mfre  = m/mnum
     real(8),parameter            :: dt    = 3.0/dble(n)
-    real(8)                      :: f(n,m)
+    real(8)                      :: f(nfre,mfre)
+    real(8)                      :: a1(n)
+    real(8)                      :: a(n)
+    real(8)                      :: b(m)
     real(8)                      :: tmp
     !real(8)                      :: fx(n,m)
     !real(8)                      :: fy(n,m)
