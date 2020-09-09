@@ -3,6 +3,7 @@
 module module_common
 
     implicit none 
+!parameterss and variables{{{
 !parameters{{{
     integer,parameter           ::   l    = 10
     integer,parameter           ::   n    = 2**l
@@ -106,6 +107,7 @@ module module_common
     real(8)                     ::  mat_U(m,m,ncut)
     real(8)                     ::  mat_V(m,m,ncut)
     real(8)                     ::  inver_sk(m,m,ncut)
+!}}}
 
     contains
 !*********** judge ********************
