@@ -1,31 +1,19 @@
-program test
-    use module_algebra
+program main
     use module_mct
-    real(8)               :: tmpa(n)
-    real(8)               :: tmpb(n)
-    real(8)               :: tmpc(n)
+    integer               :: itmp
+    integer               :: jtmp
+    real(8)               :: mat_final(ncut)
     
-    do i = 1,n
-        if(i < 200)then
-            tmpa(i) = i*deltar
-        else
-            tmpa(i) = 0.0
-        endif
-    end do
-    ! get fst
-    tmpb = fst(tmpa,1)
-    tmpc = fst(tmpb,- 1)
-    do i = 1,n
-        print "(3f12.6)",tmpa(i),tmpb(i),tmpc(i)
-        if(mod(i,10) == 0)pause
-    end do
-end program test
-!code before {{{
-    !call getmatrixes()
-    !print *,"sk =           , cr = "
-    !do i = 290,300
-    !    print "(8f12.6)",sk(1,:,i),sk(2,:,i),cr(1,:,i),cr(2,:,i)
-    !end do
+    filename = "final.txt"
+    open(10,file = filename)
 
 
-!}}}
+    call getmatrixes()
+    mat_final = getfinal()
+    do itmp = 1,ncut
+        write(10,"(2f18.9)")dk(itmp),mat_final(itmp)
+    end do
+    close(10)
+
+
+end program main
