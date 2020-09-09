@@ -17,8 +17,8 @@ module module_common
     real(8),parameter           :: dff    = 1.0                !  f-f
     !real(8),parameter           :: dfm    = (dmm + dff)/2.0    !  f-m
     real(8),parameter           :: dfm    = 1.0   !  f-m
-    real(8),parameter           :: rhom   = 0.01              !  the density of matrix
-    real(8),parameter           :: rhof   = 0.418                !  the density of fluid 
+    real(8),parameter           :: rhom   = 0.4              !  the density of matrix
+    real(8),parameter           :: rhof   = 0.5                !  the density of fluid 
     real(8),parameter           :: gold   = (sqrt(5.0) - 1.0)/2.0  ! golden rate
     !  variables for fft
     integer                     :: status 
@@ -106,6 +106,7 @@ module module_common
     real(8)                     ::  ytmp
     real(8)                     ::  tmp
     real(8)                     ::  ctmp
+    real(8)                     ::  rate
     
 !}}}
 

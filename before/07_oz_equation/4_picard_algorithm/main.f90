@@ -8,7 +8,7 @@ program main
     real(8)        :: c(n)
     
 
-    filename = "g_r.txt"
+    write(filename,"('gr',i3.3,'.txt')")int(1000*rhof)
     open(10,file = filename)
     filename = "check.txt"
     open(40,file = filename)
@@ -28,13 +28,14 @@ program main
     maymm = may(dmm)
     mayfm = may(dfm)
     mayff = may(dff)
+
 !********************************************************** 
 
     !  solve the equation
     ckmm  = 1.0
     ckfm  = 1.0
-    ckff  = 2.0
-    ckffb = 1.0
+    ckff  = 1.0
+    !ckffb = 1.0
     times = 0
     call cpu_time(t1)
     ! get hkmm
@@ -66,9 +67,8 @@ program main
        g_rff(i) = (crff(i)  +  grff(i) )/dr(i)  + 1
     end do   !  i
     ! print the results
-    write(10,*)"    r    ","    g_rmm    ","    g_rfm    ","    g_rff    "
     do i = 2,n
-        write(10,"(4f18.8)")dr(i),g_rmm(i),g_rfm(i),g_rff(i) 
+        write(10,"(3f18.8)")dr(i),g_rfm(i),g_rff(i) 
     end do
     print *,"time cost is ",t2 - t1
 

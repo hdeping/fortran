@@ -14,6 +14,7 @@ subroutine evolution()
         endif
     end do
     ckffb = fst(crffb, 1)
+    rate = 0.1
     !***********************************
     do  
         test  = ckfm 
@@ -21,22 +22,19 @@ subroutine evolution()
         gkfm(1) = 0.0
         gkff(1) = 0.0
         do   jj = 2,n 
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            ckffc(jj) = ckff(jj) - ckffb(jj)
-            hkffc(jj) = dk(jj)*ckffc(jj)/(dk(jj) - rhom*ckffc(jj))
-            hkfm(jj)  = (dk(jj)*ckfm(jj) + rhom*ckfm(jj)*hkmm(jj))/&
-                        (dk(jj) - rhof*ckffc(jj))
-            hkffb(jj) = (dk(jj)*ckffb(jj) + rhom*ckfm(jj)*hkfm(jj) + &
-                        rhof*ckffb(jj)*hkffc(jj))/(dk(jj) - rhof*ckffc(jj))
-            gkffc(jj) = hkffc(jj) - ckffc(jj)
-            gkffb(jj) = hkffb(jj) - ckffb(jj)
-            gkfm(jj)  = hkfm(jj)  - ckfm(jj)
-            gkff(jj)  = gkffc(jj) + gkffb(jj)
+           chik     = dk(jj) + rhom*hkmm(jj)
+           ckffc(jj)= ckff(jj) - ckffb(jj)
+           gkfm(jj) = ckfm(jj)*chik/(dk(jj) - rhof*ckffc(jj))&
+                      - ckfm(jj)
+           gkff(jj) = (dk(jj)**2.0*ckff(jj) + rhom*ckfm(jj)**2.0*chik -&
+                      dk(jj)*rhof*ckffc(jj)**2.0)/(dk(jj) - &
+                      rhof*ckffc(jj))**2.0 - ckff(jj)
+           gkffb(jj)= (dk(jj)**2.0*ckff(jj) + rhom*ckfm(jj)**2.0*chik)/&
+                      (dk(jj) - rhof*ckffc(jj))**2.0 - ckffb(jj)
         end do
         ! inverse fft to calculate grfm and grff
         grfm  = fst(gkfm, - 1)
         grff  = fst(gkff, - 1)
-        grffb = fst(gkffb,- 1)
         !grffb = fst(gkffb,- 1)
         !  calculate crfm and crff with PY closure
         do i = 1,n
@@ -48,9 +46,12 @@ subroutine evolution()
         ckfm  = fst(crfm,1)
         ckff  = fst(crff,1)
         ! judge the convergence and exit the cycle
-        lambda  = conver(test ,ckfm)
-        lambda1 = conver(test1,ckff)
-        !lambda2 = conver(test,ckffb)
+        !lambda  = judge(test ,ckfm)
+        !lambda1 = judge(test1,ckff)
+        !lambda  = conver(test ,ckfm)
+        !lambda1 = conver(test1,ckff)
+        lambda  = setion_rate(test ,ckfm,rate)
+        lambda1 = setion_rate(test1,ckff,rate)
         lambda = max(lambda,lambda1)
         times = times + 1
         !print *,lambda
@@ -103,37 +104,79 @@ subroutine evolution_gr()
     end do
 end subroutine evolution_gr
 !}}}
+!!subroutine evolution_mm{{{
+!! iteration method to solve OZ equation
+!subroutine evolution_mm()
+!    print *,"get hkmm"
+!    eta     = 0.5
+!    lambda1 =  (1.0 + 2*eta)**2.0/(1.0 - eta)**4.0
+!    lambda2 =  - (1.0 + 0.5*eta)**2.0/(1.0 - eta)**4.0
+!    !print *,lambda1,lambda2
+!    !pause
+!    do i = 1,n
+!        xtmp    = dr(i)/dmm
+!        if(xtmp < 1.0)then
+!        crmm(i) = dr(i)*(- lambda1 - 6.0*eta*lambda2*dr(i)-&
+!                  0.5*eta*lambda1*dr(i)**3.0)
+!        else
+!            crmm(i) = 0.0
+!        endif
+!        !print *,i,crmm(i)
+!    end do
+!    
+!    ckmm = fst(crmm,1)
+!    !  get hkmm with OZ equation
+!    hkmm(1) = 0
+!    do i = 2,n
+!        hkmm(i) = dk(i)*ckmm(i)/(dk(i) - rhom*ckmm(i))  
+!    end do
+!    ! get hrmm
+!    hrmm = fst(hkmm,- 1)
+!    !do i = 1,n
+!    !    hkmm(i) = ckmm(i) + gkmm(i)
+!    !end do
+!    !print *,"iteration times is ",times
+!end subroutine evolution_mm
+!!}}}
 !subroutine evolution_mm{{{
 ! iteration method to solve OZ equation
 subroutine evolution_mm()
     print *,"get hkmm"
-    eta     = 0.5
-    lambda1 =  (1.0 + 2*eta)**2.0/(1.0 - eta)**4.0
-    lambda2 =  - (1.0 + 0.5*eta)**2.0/(1.0 - eta)**4.0
-    !print *,lambda1,lambda2
-    !pause
-    do i = 1,n
-        xtmp    = dr(i)/dmm
-        if(xtmp < 1.0)then
-        crmm(i) = dr(i)*(- lambda1 - 6.0*eta*lambda2*dr(i)-&
-                  0.5*eta*lambda1*dr(i)**3.0)
-        else
-            crmm(i) = 0.0
+    times = 0
+    ckmm = 1.0
+    call cpu_time(t1)
+    do 
+        test    = ckmm
+        test_cr = crmm
+        gkmm(1) = 0.0
+        do i = 2,n
+            gkmm(i) = rhom*ckmm(i)**2.0/(dk(i) - rhom*ckmm(i))
+        end do
+        ! inverse fft to calculate grmm
+        grmm = fst(gkmm,- 1)
+        ! calculate crmm with PY closure
+        do i = 1,n
+            crmm(i) = (dr(i) + grmm(i))*maymm(i)
+        end do
+        ! fft to calculate ckmm
+        ckmm = fst(crmm,1)
+        ! judge the convergence
+        ! get a mean value of ckmm  (golden setion)
+         times = times + 1
+
+        lambda = conver(test,ckmm)
+        !if(times > int(1E4))exit
+        if(mod(times,1000) == 0)then
+            print *,"lambda = ",lambda
         endif
-        !print *,i,crmm(i)
+        if(lambda < error)exit
+        !print *,"rhom = ",rhom
+        !pause
     end do
-    
-    ckmm = fst(crmm,1)
-    !  get hkmm with OZ equation
-    hkmm(1) = 0
-    do i = 2,n
-        hkmm(i) = dk(i)*ckmm(i)/(dk(i) - rhom*ckmm(i))  
+    do i = 1,n
+        hkmm(i) = ckmm(i) + gkmm(i)
     end do
-    ! get hrmm
     hrmm = fst(hkmm,- 1)
-    !do i = 1,n
-    !    hkmm(i) = ckmm(i) + gkmm(i)
-    !end do
     !print *,"iteration times is ",times
 end subroutine evolution_mm
 !}}}
@@ -151,6 +194,8 @@ function may(d)
     end do
 end function may
 !}}}
+!*************************************************************************************
+!*********** several kinds of methods for judging convergence ************************
 !function judge{{{
 ! compare the difference between two arrays
 ! judge the convergence
@@ -167,6 +212,24 @@ function judge(a,b)
     !judge = judge/dble(n)
     
 end function judge
+!}}}
+!function setion_rate{{{
+! compare the difference between two arrays
+! judge the convergence
+function setion_rate(a,b,rate)
+    real(8),intent(in)      :: a(n)
+    real(8),intent(in)      :: rate
+    real(8),intent(inout)   :: b(n)
+    real(8)                 :: setion_rate
+    integer                 :: ii
+    
+    setion_rate = judge(a,b)
+    do ii = 1,n 
+        b(ii) = a(ii)*rate + b(ii)*(1.0 - rate)
+    end do
+    !judge = judge/dble(n)
+    
+end function setion_rate
 !}}}
 !function bisetion{{{
 ! compare the difference between two arrays
