@@ -17,7 +17,7 @@ module module_common
     ! diameters
     real(8),parameter           :: dmm    = 1.0                
     real(8),parameter           :: dff    = 1.0                
-    real(8),parameter           :: dss    = 1.0   
+    real(8),parameter           :: dss    = 1.0
     !real(8),parameter           :: dfm    = (dmm + dff)/2.0   
     !real(8),parameter           :: dsm    = (dss + dmm)/2.0   
     !real(8),parameter           :: dsf    = (dss + dff)/2.0   
@@ -25,8 +25,8 @@ module module_common
     real(8),parameter           :: dsm    = 1.0   
     real(8),parameter           :: dsf    = 1.0   
 
-    real(8),parameter           :: rhom   = 0.3              !  the density of matrix
-    real(8),parameter           :: rhof   = 0.3                !  the density of fluid 
+    real(8),parameter           :: rhom   = 0.5              !  the density of matrix
+    real(8),parameter           :: rhof   = 0.5                !  the density of fluid 
     real(8),parameter           :: gold   = (sqrt(5.0) - 1.0)/2.0  ! golden rate
 !}}}
 !common variables{{{
