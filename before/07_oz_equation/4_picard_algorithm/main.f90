@@ -1,6 +1,6 @@
 program main
+    use module_common
     use module_fst
-    implicit none
 
     filename = "result.txt"
     open(20, file = filename)
@@ -9,18 +9,19 @@ program main
         dr(i) = (i - 1)*deltar
         dk(i) = (i - 1)*deltak
     end do
+    ! calculate mayer function of m-m
+    maymm = may(dmm)
     
-    !*******check the result *************
+    !*********  check the results ************
 
     call check()
 
-    !************************************
+    !******************************************
 
     !  print crmm and test to make a comparision
-    write(20,*)"  i   ","    new_crmm    ","    old_crmm   "
+    write(20,*)"      r       ","    new_grmm    ","    old_grmm   "
     do i = 2,n
-        write(20,"(3f15.7)")dr(i), test(i)/dr(i), crmm(i)/dr(i)
+        write(20,"(3f15.7)")dr(i), test(i)/dr(i), grmm(i)/dr(i)
     end do
-    close(10)
     close(20)
 end program main
