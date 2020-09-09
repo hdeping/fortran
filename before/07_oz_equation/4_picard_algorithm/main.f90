@@ -1,24 +1,26 @@
 program main
-    use module_common
     use module_fst
-    integer       ii
+    implicit none
 
-    do ii = 1,n
-        a(ii) = ii
+    filename = "result.txt"
+    open(20, file = filename)
+    ! initial dr and dk
+    do i = 1,n
+        dr(i) = (i - 1)*deltar
+        dk(i) = (i - 1)*deltak
     end do
-
-    test  = a
-    do ii = 1,1000
-        b = fst(test,1)
-        c = fst(b,- 1)
-        test = c
-    end do
-    do ii =  1,n
-        print *,a(ii),b(ii),c(ii)
-    end do
-    lambda = judge(a,c)
-    print *,"lambda is ==>",lambda
     
-    
+    !*******check the result *************
 
+    call check()
+
+    !************************************
+
+    !  print crmm and test to make a comparision
+    write(20,*)"  i   ","    new_crmm    ","    old_crmm   "
+    do i = 2,n
+        write(20,"(3f15.7)")dr(i), test(i)/dr(i), crmm(i)/dr(i)
+    end do
+    close(10)
+    close(20)
 end program main

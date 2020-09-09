@@ -133,7 +133,6 @@ subroutine evolution()
             test2(i) = test(i)*(1.0 - gold) + ckmm(i)*gold 
         end do
         
-        
         lambda1 = judge(test,test1)
         lambda2 = judge(test,test2)
         if(lambda1 < lambda2)then
@@ -152,6 +151,33 @@ subroutine evolution()
         if(lambda < error)exit
     end do
 end subroutine evolution
+!}}}
+!subroutine check{{{
+subroutine check()
+    filename = "cr.txt"
+    open(10,file = filename,status = "old",iostat = ierror)
+    ! calculate mayer function of m-m
+    maymm = may(dmm)
+    ! read c(r) from file
+    do i = 1,n
+        read(10,*,iostat = ierror)tmp,ctmp
+        crmm(i) = ctmp*dr(i) 
+    end do
+    ! calculate hkmm
+    ckmm = fst(crmm,1)
+    ! calculate ckmm with oz equation
+    gkmm(1) = 0.0
+    do i = 2,n
+        gkmm(i) = rhom*ckmm(i)**2.0/(dk(i) - rhom*ckmm(i))   
+    end do
+    ! calculate grmm
+    grmm = fst(gkmm,- 1)
+    ! calculate a new crmm(name test)
+    test(1) = 0.0
+    do i = 2,n
+       test(i) = (dr(i) + grmm(i))*maymm(i)
+    end do
+end subroutine check
 !}}}
 ! fft相关子程序,包括:
 !                       fft: 一维快速傅立叶变换

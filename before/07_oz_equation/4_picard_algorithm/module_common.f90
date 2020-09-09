@@ -9,11 +9,11 @@ module module_common
     real(8),parameter           ::   pi   = 3.141592653 
     real(8),parameter           :: deltar = 0.01
     real(8),parameter           :: deltak = pi/dble(n)/deltar 
-    real(8),parameter           :: error  = 1E-12               !  for the differences
+    real(8),parameter           :: error  = 1E-12              !  for the differences
     real(8),parameter           :: dmm    = 1.0                !  m-m 
     real(8),parameter           :: dff    = 1.0                !  f-f
     real(8),parameter           :: dfm    = (dmm + dff)/2.0    !  f-m
-    real(8),parameter           :: rhom   = 1.4              !  the density of matrix
+    real(8),parameter           :: rhom   = 1                  !  the density of matrix
     real(8),parameter           :: rhof   = 0.1                !  the density of fluid 
     real(8),parameter           :: gold   = (sqrt(5.0) - 1.0)/2.0  ! golden rate
     !  variables for fft
@@ -38,9 +38,6 @@ module module_common
     real(8)                     ::  dk(n)     ! k
     real(8)                     ::  dr(n)     ! r
     real(8)                     ::  chik      ! chi
-    real(8)                     ::  a(n)
-    real(8)                     ::  b(n)
-    real(8)                     ::  c(n)
 
     ! for convenience, h for H, c for C
     ! H = r*h, C = r*c
@@ -92,6 +89,7 @@ module module_common
     integer                     ::  i        
     integer                     ::  j        
     integer                     ::  times        
+    integer                     ::  ierror
     character(20)               ::  filename 
     real(8)                     ::  xtmp
     real(8)                     ::  ytmp
