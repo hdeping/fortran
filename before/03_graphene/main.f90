@@ -1,110 +1,71 @@
 program main
-use module_common
-use module_lattice
-use module_KMCevent
-use module_event
-
-real*8                     ::    rate
-integer                    ::    i_level
-real                       ::    dEH1(6),dEH2(6)
-real                       ::    dET1(6),dET2(6)
-integer,parameter          ::    nT_tot = 1E6
-real*8                     ::    freq(6,4)
-integer                    ::    theProc
-
-call random_seed()
-! 初始化绘图窗口及记录鼠标事件的变量
-!jUnit  =  GetActiveQQ()
-!jfbk   =  RegisterMouseEvent( jUnit, Mouse$LBUTTONDOWN, PauseProgram )
-!jfbk2  =  RegisterMouseEvent( jUnit, Mouse$RBUTTONDOWN, PauseProgram2 )
-
-open(11,file = 'EqDis.dat')
-open(12,file = 'flux.dat')
-open(14,file = 'data.txt')
-do i = 1,191
-    c_ci(1) = 0.007+0.0001*(i-1)
-    call initial()
-    write(11,"(I5,6G18.9)") i,c_ci
-    write(12,"(25G18.9)") c_ci(1),k_ciH,k_ciH_D,k_ciT,k_ciT_D
-enddo !i
-close(11)
-close(12)
-!call InitGraphWindow(color_background)
-pause
-dET1 = dEiT_B-dEiH_B
-dET2 = dEiT_B2-dEiH_B2    
-
-write(fName,"('growthCnt.dat')")
-open(13,file = fName)
-do irun = 0,0 !20
-    nt = 0
-    c_ci(1) = 0.01    
-    !ii = 5
-    dEiT_B = dEiH_B+ 0.05*real(20-irun)*dET1
-    dEiT_B2 = dEiH_B2+ 0.05*real(20-irun)*dET2
-    cnt_growth = 0.0
-    call initial()
-!    call SetGraphWindow( x_scr, y_scr, x_scr+w_scr, y_scr+h_scr )
-!    Call SetTextWindow( int2(46), int2(5), int2(47), int2(860) )
-    !call drawBonds()
-    !call drawSites()    
-!    call drawSites_growthStatus()    
-    open(10,file = 'count.dat')
-    write(fName,"('cnt',I2.2,'.dat')") 20-irun
-    open(12,file = fName)
-!    do while(nt<nT_tot)
-    do while(sum(cnt_growth)<100000)
-        !更新各参数
-        call update()
-        ! 单击鼠标左键暂停
-        if( jfg_pause module_ = = 1 ) then
-            open(11,file = 'initial.dat')
-            do ii = 1,nx_ltc
-                write(11,"(60I5)") status(ii,:)
-            enddo !ii
-            close(11)
-            pause
-            jfg_pause module_ = 0
-        else if(jfg_pause module_ = = 2) then
-            !call drawBonds()
-            !call drawSites_growthStatus()
-            pause
-            jfg_pause module_ = 0    
-        endif
-        !表面生长
-    !    call growth()
-        call growth2(theProc)
-        write(12,"(I5)") theProc
+    use module_graph
+    use module_lattice
+    use module_growth
+   
+    implicit none
+    integer   num,output(m)
+    integer   array1(4),array2(8),array3(4,2)
+    integer  times
     
-        ! 移动观察窗口
-        if(pos_front>nx_ltc-1) then
-            call moveLattice()
-            !Call ClearScreen($GCLEARSCREEN)
-            !call drawBonds()
-            !call drawSites()
-!            call drawSites_growthStatus()    
-!            call redraw(pos_graphene,pos_front)
-        endif
-
-        ! 隔一段时间画一次图
-    !    if( dt > 1E-1) then
-    !        dt = .0
-        if(mod(nT,200) = =1) then
-            !call redraw(pos_graphene,pos_front+1)
-!            call drawSites_growthStatus()    
-            rate = dble(0.142*1.5*(pos_graphene+xPos_ltc-2))/dble(time)
-            print*,nt, time,rate,int(sum(cnt_growth))           ! write to a new file:data.txt
-            !write(14,*)nt,time,rate,int(sum(cnt_growth))
-            open(11,file = 'dt.dat')
-            write(11,"(7G18.9)") 0.05*real(20-irun),cnt_growth/sum(cnt_growth)
-            close(11)
-        endif
-!        write(13,"(7G18.9)") 0.05*real(20-irun),sum(cnt_growth)
-    enddo
-    close(10)
-    close(12)
-    write(13,"(7G18.9)") 0.05*real(20-irun),cnt_growth/sum(cnt_growth)
-!    call freqCNT(irun,freq)
-enddo !irun
-close(13)
-end program main
+    call RANDOM_SEED()
+    call initgraphwindow(mycolor(2))
+    call setviewport(ux,uy,dx,dy)
+    ! initialize the interface
+    state = 0
+    array1 = (/1,2,m-1,m/)
+    !do i = 1,4
+    !    array2(i) = i
+    !    array2(i+4) = n+1-i
+    !    state(:,array1(i)) = 1
+    !end do  !i
+    !do i = 1,8
+    !    state(array2(i),:) = 1
+    !end do  !i
+    do i = 4,n-10,20
+        do j = 8,m-10,20
+            array3(:,1) = (/i,i,i+10,i+10/)
+            array3(:,2) = (/j,j+7,j-3,j+10/)
+            do itmp = 1,4
+                state(array3(itmp,1),array3(itmp,2)) = 1
+                call neighbor2(nei2,array3(itmp,1),array3(itmp,2))
+                do jtmp = 1,6
+                    state(nei2(jtmp,1),nei2(jtmp,2)) = 1
+                end do  ! jtmp
+            end do   !itmp
+        end do  !j
+    end do   ! i
+    call latticeinterface(n,m,state)
+    
+    
+    end program main
+    !call boundary()
+    !jcolor = saveimage(filename,0,0,1440,900)
+   !  initial the border array
+   
+   !do i = 1,25
+      ! do j = 23+i,77-i
+         !  state(j,i+2) = 1
+         !  call drawcircle(1,j,i+2)
+         !   !state(i+2,j) = 1
+         !  !call drawcircle(1,i+2,j)
+      ! end do  !j
+   !end do   ! i
+   
+    !do  jtmp = 1,10
+ !  call boundary()
+ !  times = 0
+ !  p = >head
+ !  call RANDOM_NUMBER(x1)
+ !  junit = int(1000*x1)+1
+ !  do while(associated(p))
+    !   times = times+1
+    !   if(times>junit.and.times<junit+100)then
+    !   i = p.i
+    !   j = p.j
+    !   state(i,j) = 1
+    !   call drawcircle(state(i,j),i,j)
+    !   endif
+    !   p = >p.next
+ !  end do  ! while
+ !  end do  ! jtmp

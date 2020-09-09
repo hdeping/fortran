@@ -1,229 +1,257 @@
-module module_lattice
-use module_common
-!use module_Graph
-
-contains
-!*******************************************************************
-subroutine update()
-integer flag,loc,flag1,ii,value
-
-do ii = pos_graphene,nx_ltc
-    ! 更新完整的graphene界面位置
-    if(sum(status(ii,:)) = =ny_ltc.and.ii==pos_graphene+1) then
-        pos_graphene = ii !
-        nT_stay = nT
-        do jj = 1,ny_ltc
-            if(growthStatus(ii,jj)>0) cnt_growth(growthStatus(ii,jj)) = cnt_growth(growthStatus(ii,jj))+1.
-        enddo !jj
-    endif
-    do jj = 1,ny_ltc                                                 ! 更新x方向最大占据位置
-        if(status(ii,jj) = =1.and.ii>pos_front) pos_front=ii
-     enddo                                                       !jj
-enddo                                                           !ii    ! 更新当前可被占据的Ci构型列表,构型限制在同一列，列表给出的位置为构型的第一个C位置，要求可用构型纵向坐标不能超过临列已占据的坐标
-n_cfgH = 0
-n_cfgT = 0
-do ii = pos_graphene,nx_ltc                                    !pos_graphene+4 !pos_front+1,修改于2014-8-12,
-    do jj = 1,ny_ltc                                                ! 这两重循环为遍历生长区域内所有点
-        do j_c = 1,6                                                ! 这重循环为遍历以(ii,jj)点为起点的所有ci簇
-            flag = 0
-            do jj_c = 1,j_c                                       ! 这重循环遍历当前构型包含的所有位点
-                loc = jj+jj_c-1
-                if(loc>ny_ltc)then
-                    loc = mod(loc,ny_ltc)                
-                    if(loc = =0)loc=ny_ltc
-                endif
-                value = ii
-                if(value>ny_ltc)then
-                    value = mod(value,ny_ltc)
-                    if(value = =0)value=ny_ltc
-                endif
-                if(status(ii,loc) = =1) goto 100                  ! 若该位置被占据，则当前ci构型不可用且所有i更大的ci构型都不可用
-                if(status(ii-1,loc)/ = 1) goto 100                ! 检查当前点是否超过临列已占据的坐标
-                call getSiteType(ii,loc)                        ! 记录该构型包含多少高能量位
-                if(mod(ii+loc,2) = =0) flag=flag+type_site
-                if(type_site = =1.and.j_c==1) then
-                    call getSiteClass(ii,jj)
-                    if(n_neighbor = =2) flag=0
-                endif
-            enddo !jj_c
-
-            loc = jj-1
-            if(loc = =0) loc=ny_ltc 
-            if(flag<1.and.status(ii,loc)/ = 1.and.mod(ii+jj,2)==1) goto 200        ! 检查构型上端是否超过临列已占据的坐标
-            flag1 = status(ii,loc)                                    ! 检查构型上端临位是否都被占据
-            loc = jj+j_c
-            if(loc>ny_ltc) loc = loc-ny_ltc
-            if(flag<1.and.status(ii,loc)/ = 1.and.mod(ii+jj+j_c-1,2)==1) goto 200 ! 检查构型下端是否超过临列已占据的坐标
-            flag1 = flag1+status(ii,loc)                                ! 检查构型下端临位是否都被占据
-            if(flag1 = =2) then 
-                if(j_c<5) flag = -7+flag                                ! 若上下端临位都被占据，对于i<4的构型无论是否包含高能量位，都按低能量位处理
-                                                                    ! 否则在考虑能量问题时，仍需检查该构型是否包含高能量位
-            endif
-            if(flag<1) then
-                n_cfgH(j_c) =  n_cfgH(j_c)+1                            ! 不包含高能量位或者上下端临位都被占据，则该构型为低能量构型
-                cfgH(j_c,n_cfgH(j_c),:) = (/ii,jj/)
-            else
-                n_cfgT(j_c) =  n_cfgT(j_c)+1                            ! 否则该构型为高能量构型
-                cfgT(j_c,n_cfgT(j_c),:) = (/ii,jj/)
-                if(j_c>1.and.flag1 = =2) then
-                    do itmp = j_c+1,6
-                        n_cfgT(itmp) =  n_cfgT(itmp)+1                ! 特殊情形，若当前为c5构型且该构型恰好补全改列，则c6也可填充到该构型
-                        cfgT(itmp,n_cfgT(itmp),:) = (/ii,jj/)
-                    enddo !itmp
-                endif
-            endif
-200            cycle                    
-        enddo !j_c
-100        cycle    
-    enddo !jj
-enddo !ii
-n_cfgH_D = 0
-n_cfgT_D = 0
-do ii = pos_graphene,nx_ltc-1           ! 原为pos_front+1,修改于2014-8-12
-    do jj = 1,ny_ltc                    ! 这两重循环为遍历生长区域内所有点
-        do j_c = 1,6                    ! 这重循环为遍历以(ii,jj)点为起点的所有ci簇
-            flag = 0
-            do jj_c = 1,j_c            ! 这重循环遍历当前构型包含的所有位点
-                loc = jj+jj_c-1
-                if(loc>ny_ltc) loc = loc-ny_ltc
-                if(status(ii,loc) = =0) goto 300                        ! 若给位置未占据，则当前ci构型不可用且所有i更大的ci构型都不可用
-                if(ii<nx_ltc.and.status(ii+1,loc) = =1) goto 300        ! 检查当前点的右临列是否已占据，若占据则不可脱附
-                call getSiteType(ii,loc)                            ! 记录该构型包含多少高能量位
-                if(mod(ii+loc,2) = =0) flag=flag+type_site
-            enddo !jj_c
-            loc = jj-1
-            if(loc = =0) loc=ny_ltc 
-            if((j_c = =1.or.flag<1).and.status(ii,loc)==1.and.mod(ii+jj,2)==0) goto 300        ! 检查构型上端是否超过临列已占据的坐标
-            flag1 = status(ii,loc)                                    ! 检查构型上端临位是否被占据
-            loc = jj+j_c
-            if(loc>ny_ltc) loc = loc-ny_ltc
-            if((j_c = =1.or.flag<1).and.status(ii,loc)==1.and.mod(ii+jj+j_c-1,2)==0) goto 400 ! 检查构型下端是否超过临列已占据的坐标
-            flag1 = flag1*status(ii,loc)                                ! 检查构型下端临位是否都被占据
-            if(flag1 = =1) goto 400                                    ! 若上下端临位都被占据，则不可脱附
-            if(flag<1) then
-                n_cfgH_D(j_c) =  n_cfgH_D(j_c)+1                        ! 不包含高能量位或者上下端临位都被占据，则该构型为低能量构型
-                cfgH_D(j_c,n_cfgH_D(j_c),:) = (/ii,jj/)
-            else
-                n_cfgT_D(j_c) =  n_cfgT_D(j_c)+1                        ! 否则该构型为高能量构型
-                cfgT_D(j_c,n_cfgT_D(j_c),:) = (/ii,jj/)
-            endif
-400            cycle                    
-        enddo !j_c
-300        cycle    
-    enddo !jj
-enddo !ii
-end subroutine update
-!*******************************************************************
-subroutine getSiteClass(i,j)
-! 检查当前点的分类，class_site = 3: body; 2: surface; 1: active; 0: inactive
-integer i,j,ss(3)
-! neighbor 1
-if(j = =1)then                                        !此处改为2013-12-3 18：59
-    ss(1) = status(i,ny_ltc)
-else
-ss(1) = status(i,j-1)
-endif
-! neighbor 2
-if(j = =ny_ltc)then
-    ss(2) = status(i,1)
-else
-ss(2) = status(i,j+1)
-endif
-! neighbor 3
-if(mod(i+j,2) = =0) then                              !此处改为2013-12-3 18：59
-    if(i = =1)then
-        ss(3) = 1
+module module_lattice 
+    use module_common
+    use module_graph
+    
+    contains
+!*************************************************
+  subroutine statenum(status,num)
+    integer  num,tmp,status
+    tmp = 0
+     do i = 2,n-1
+     do j = 2,m-1
+     if (state(i,j) = =status)tmp=tmp+1
+     end do !j
+     end do !i
+     num = tmp
+     end subroutine statenum   
+!*************************************************
+   subroutine area_multi(s,n,x,y)
+   integer  n
+   real s, x(n), y(n)
+   real  tmp,tmp1,xtmp(3),ytmp(3)
+   tmp = 0
+   xtmp(1) = x(1)
+   ytmp(1) = y(1)
+   do i = 2,n-1
+    xtmp(2) = x(i)
+   ytmp(2) = y(i)
+    xtmp(3) = x(i+1)
+   ytmp(3) = y(i+1)
+   call area_tri(tmp1,xtmp,ytmp)
+   tmp = tmp+tmp1
+   end do  !i
+   s = tmp
+   end subroutine area_multi
+!*************************************************
+    subroutine area_tri(s,x,y)
+    real s,x(3),y(3)
+    real tmp(4)
+    tmp(1) = x(2)-x(1)
+    tmp(2) = y(2)-y(1)
+    tmp(3) = x(3)-x(1)
+    tmp(4) = y(3)-y(1)
+    s = abs(tmp(1)*tmp(4)-tmp(2)*tmp(3))/2.
+    end subroutine area_tri
+!*************************************************
+    ! avoid the most outside border
+    subroutine neighbornum(num,i,j)
+    integer  num,i,j,times,i1,i2,j2
+    times = 0
+    call  neighbor2(nei2,i,j)
+    do i1 = 1,6
+    i2 = nei2(i1,1)
+    j2 = nei2(i1,2)
+    !if(i2>0.and.i2<n+1.and.j2<m+1.and.j2>0)then
+    if(state(i2,j2) = =1)times=times+1                !  the number of the occupied sites
+    end do !i1
+   num = times
+    end subroutine neighbornum
+!*************************************************
+    subroutine neighbor2(nei2,i,j)
+    integer i,j,nei2(6,2)
+    nei2(:,1) = (/i+2,i+1,i-1,i-2,i-1,i+1/)
+    nei2(:,2) = (/j,j+1,j+1,j,j-1,j-1/)
+    end subroutine neighbor2
+!*************************************************
+    subroutine neinum(num,i,j)
+    integer  num,i,j,times
+     times = 0
+    call  neighbor(nei1,i,j)
+    do i1 = 1,3
+    i2 = nei1(i1,1)
+    j2 = nei1(i1,2)
+    if(i2>0.and.i2<n+1.and.j2<m+1.and.j2>0)then
+    if(state(i2,j2) = =0)times=times+1
+    end if
+    end do !i1
+   num = times
+    end subroutine neinum
+!*************************************************
+    ! nearest 
+    subroutine neighbor(nei1,i,j)
+    integer  nei1(4,2),i,j,k
+    nei1(1,:) = (/i+1,j/)
+    nei1(2,:) = (/i-1,j/)
+     if(mod(i,2) = =0)then
+     if(mod(j,2) = =0)then
+    k = 4
     else
-    ss(3) = status(i-1,j)
-    endif 
-else
-    if(i = =nx_ltc)then
-        ss(3) = 0
-    else
-    ss(3) = status(i+1,j)
+    k = 1
     endif
-endif
-class_site = sum(ss)
-n_neighbor = sum(ss)
-if(status(i,j) = =1.and.class_site<3) class_site=2
-if(status(i,j) = =0.and.class_site>0) class_site=1
-end subroutine getSiteClass
-!*******************************************************************
-subroutine getSiteType(i,j)
-! 检查当前点发生生长过程的类型，1: atop; 0: hollow
-integer :: i,j
-integer :: i_pos,j_pos,i1
-
-type_site = 0
-i_pos = mod(i+xPos_ltc-2,nx_barrier)
-if(i_pos = =0) i_pos=nx_barrier
-j_pos = mod(j,ny_barrier)
-if(j_pos = =0) j_pos=ny_barrier
-select case (i_pos)
-    case(2,4,15,17)
-        if(j_pos = =4.or.j_pos==6) type_site=1
-    case(3,16)
-        if(j_pos = =3.or.j_pos==5.or.j_pos==7) type_site=1
-    case(5,7,12,14)
-        if(j_pos = =14.or.j_pos==16) type_site=1
-    case(6,13)
-        if(j_pos = =13.or.j_pos==15.or.j_pos==17) type_site=1
+    else
+     if(mod(j,2) = =0)then
+    k = 3
+    else
+    k = 2
+    endif
+    endif
+    select case(k)
+    case (2,4)
+    nei1(3,:) = (/i,j+1/)    
+    nei1(4,:) = (/i,j-1/)  
     case default
-end select
-
-end subroutine getSiteType
-!*******************************************************************
-subroutine getNeighbors(i,j)
-! get neighbors of site(i,j)
-integer    i,j
-! neighbor 1
-if(j = =1) then
-    Neighbors(1,:) = (/i,ny_ltc/)                                  !修改于2014-8-14
-else
-Neighbors(1,:) = (/i,j-1/)
-endif
-! neighbor 2
-if(j = =ny_ltc) then
-    Neighbors(2,:) = (/i,1/)
-else
-Neighbors(2,:) = (/i,j+1/)
-endif
-! neighbor 3
-if(mod(i+j,2) = =0) then                                          !此处于2013-12-3 18：52修改
-    if(i = =1)then
-     Neighbors(3,:) = (/nx_ltc,j/)   
+    nei1(3,:) = (/i,j-1/)  
+    nei1(4,:) = (/i,j+1/)    
+    end select
+    nei2(:,1) = (/i+2,i+1,i-1,i-2,i-1,i+1/)
+    nei2(:,2) = (/j,j+1,j+1,j,j-1,j-1/)
+    end subroutine neighbor
+!*************************************************
+    !   two   rectangle
+    subroutine updateborder(x,y)
+    integer  x(4),y(4)
+    integer  a(3,2)
+    integer  i,j,k
+    a(:,1) = (/1,2,1/)
+    a(:,2) = (/4,3,4/)
+    do k = 1,3
+    do i = x(k),x(k+1)
+        do j = y(a(k,1)),y(a(k,2))
+            
+        end do  !j
+    end do   !i
+    end do  !k
+    end subroutine updateborder
+!*************************************************
+    subroutine drawboundary()
+    call boundary
+     p = >head
+   do while(associated(p))
+       call drawcircle(2,p.i,p.j)
+       p = >p.next
+   end do  ! while
+    end subroutine drawboundary
+!*************************************************
+    !  consider the neighbor site and the second neighbor site
+    subroutine boundary()
+    integer  a,i1,j1
+    integer  si,sj,k,icycle
+    integer  i_pre,j_pre
+    integer  tmpnew(2,3)    ! for the rest neighbors
+    integer  times,icount     !  count the cycles
+    nullify(head)
+    nullify(last)
+    open(10,file = "tmp.txt")
+    a = n/4
+    do 
+        times = 0
+    do  i = 1,n
+        if(state(a,i) = =0)then
+            call neinum(num,a,i)
+            if(num<3.and.num>0)times = 1
+            exit
+        endif
+    end do  ! i
+    if(times = =1)exit
+    a = a-1
+    end   do   !
+    !print *,a
+    !read*
+    j = i
+    i = a
+    si = i
+    sj = j
+    call neighbor(nei1,i,j)
+    itmp = 1
+    i_pre = nei1(itmp,1)
+    j_pre = nei1(itmp,2)
+    do 
+        call link(i,j)
+        call  drawcircle(2,i,j)                       !  drawcircle
+        call neighbor(nei1,i,j)
+        times = 0
+        tmpnew = 0
+        do itmp = 1,3
+            i1 = nei1(itmp,1)
+            j1 = nei1(itmp,2)
+            call stateborder(num,i1,j1)                           !  judge if it's a border site
+            if((i1 = =i_pre.and.j1==j_pre).or.num==0)cycle
+            times = times+1
+            tmpnew(times,1:2) = nei1(itmp,:)
+            tmpnew(times,3) = num
+        end do
+        ! record the point  and point to the pre-site
+        k = sum(tmpnew(:,3))                     !   2  for  two border  ,1   for  one border   ,    0  for  no  neighbor  border
+            if(k = =2)then
+                do itmp = 1,2 
+                    i1 = tmpnew(itmp,1)
+                    j1 = tmpnew(itmp,2)
+                    call neinum(num,i1,j1)
+                    if(num = =1)exit
+                end do  !i
+                call link(i1,j1)                                     !  link to this site
+                call  drawcircle(2,i1,j1)                       !  drawcircle
+                call link(i,j)                                         !   link to the previous site
+                if(itmp<3)then
+                i1 = tmpnew(3-itmp,1)
+                j1 = tmpnew(3-itmp,2)
+                else
+                    i1 = nei1(4,1)
+                    j1 = nei1(4,2)
+                endif
+            elseif(k = =1)then
+                do itmp = 1,2
+                    if(tmpnew(itmp,3) = =1)exit
+                end do  !itmp
+                    i1 = tmpnew(itmp,1)
+                    j1 = tmpnew(itmp,2)
+            else      !  consider the second neighbor site
+                    call neighbor2(nei2,i,j)
+                    do icycle = 1,6
+                        i1 = nei2(icycle,1)
+                        j1 = nei2(icycle,2)
+                        if(i1 = =i_pre.and.j1==j_pre)cycle
+                        call stateborder(num,i,j)
+                        if(state(i1,j1) = =0.and.num==1)exit
+                    end do   ! icycle
+            endif
+        i_pre = i
+        j_pre = j
+        i = i1
+        j = j1
+        if(i = =si.and.j==sj)exit
+        read*
+        write(10,*)i,j
+    end do  !
+    close(10)
+    end subroutine boundary
+!*************************************************
+    !  link the data to the pointer
+    subroutine link(i,j) 
+    integer  i,j
+    allocate(p)
+        p.i = i
+        p.j = j
+        p.next = >null()
+        if(associated(last))then
+            last.next = >p
+            last = >p
+        else
+            head = >p
+            last = >p
+        endif
+    end subroutine link
+!*************************************************
+    !  judge a site border or not  ,  0 for no and 1 for yes
+    subroutine stateborder(status,i,j)
+    integer status,i,j
+    integer junum
+    call neighbornum(junum,i,j)
+    if(state(i,j) = =0.and.junum>1.and.junum<6)then      !  the number of second neighbor sites is larger than 1 but less than 6
+        status = 1
     else
-    Neighbors(3,:) = (/i-1,j/)
+        status = 0
     endif
-else
-    if(i = =nx_ltc)then
-    Neighbors(3,:) = (/nx_ltc,j/)    
-    else
-    Neighbors(3,:) = (/i+1,j/)
-    endif
-endif
-endsubroutine getNeighbors
-!*******************************************************************
-subroutine moveLattice()
-! 将当前观察窗口沿x正向平移偶数列
-integer    dj,j_status(nx_ltc,ny_ltc)
-dj = pos_graphene-1
-if(mod(dj,2) = =1) dj=dj-1
-if(dj<1) then
-    print*,"Warning: the present configure is out of the observation window!"
-    stop
-endif
-xPos_ltc = xPos_ltc+dj
-pos_front = pos_front-dj
-pos_graphene = pos_graphene-dj
-j_status = status
-status(1:pos_front,:) = j_status(dj+1:dj+pos_front,:)
-status(1+pos_front:nx_ltc,:) = 0
-j_status = growthstatus
-growthstatus(1:pos_front,:) = j_status(dj+1:dj+pos_front,:)
-growthstatus(1+pos_front:nx_ltc,:) = 0
-!cfgH(:,:,1) = cfgH(:,:,1)-dj
-!cfgT(:,:,1) = cfgT(:,:,1)-dj
-end subroutine moveLattice
-!*******************************************************************
-end module module_lattice
+    end subroutine stateborder
+!*************************************************
+    end module module_lattice
