@@ -6,23 +6,22 @@ module module_common
 !parameters{{{
     integer,parameter           ::   l    = 10
     integer,parameter           ::   n    = 2**l
-    integer,parameter           ::  ncut  = 200
-    ! cut-off of n
-    integer,parameter           :: tmnum  = 800
+    integer,parameter           ::  ncut  = 200   ! cut-off of n
+    integer,parameter           :: tmnum  = 200
     integer,parameter           ::   m    = 2 !number components
-    integer,parameter           ::  fre   =  int(1E3)
+    integer,parameter           ::  fre   =  int(1E5)
     integer,parameter           ::  nnum  = 40
     real(8),parameter           ::   pi   = 3.141592653 
     real(8),parameter           :: deltar = 0.01
     real(8),parameter           ::    h   = pi/dble(n)/deltar ! deltak
-    real(8),parameter           :: error  = 1E-10      !  for the diwwerences
+    real(8),parameter           :: error  = 1E-8      !  for the diwwerences
     ! the diameter
     real(8),parameter           :: d11    = 1.0       !  
     real(8),parameter           :: d22    = 1.0      !  
     real(8),parameter           :: d12    = (d11 + d22)/2.0  
     real(8),parameter           :: d(m*m) = (/d11,d12,d22,0D0/)
     ! the number dendity
-    real(8),parameter           :: rho    = 0.4
+    real(8),parameter           :: rho    = 0.9
     !   matrix T and dimensionless
     real(8),parameter           :: atom   = 1.6605402E-27
     real(8),parameter           :: temper = 300.0           ! temperature 
@@ -32,6 +31,7 @@ module module_common
     real(8),parameter           :: mass2  = 28.0*dble(nnum)  ! polymer
     real(8),parameter           :: v      = 1.0
     real(8),parameter           :: gold   = (sqrt(5.0) - 1.0)/2.0
+    real(8),parameter           :: smul   = 82.0
 !}}}
 !common variables{{{
     real(8)                     ::  dt     ! step length
@@ -93,13 +93,11 @@ module module_common
     real(8)                     ::  memory(ncut,tmnum)! memory kernel
     real(8)                     ::  diffu      ! diffusion
     real(8)                     ::  mat_A(ncut,ncut,ncut)
-    real(8)                     ::  gamq(ncut)
+    !real(8)                     ::  mat_B(ncut)
+    !real(8)                     ::  mat_D(ncut)
     real(8)                     ::  mat_R(ncut)
     real(8)                     ::  mat_K(ncut)
     real(8)                     ::  mat_U(ncut)
     real(8)                     ::  mat_V(ncut)
     real(8)                     ::  inver_sk(ncut)
-
-
-
 end module module_common
