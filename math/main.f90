@@ -1,53 +1,39 @@
 program main
-    include "mpif.h"
-    character(len=30)      ::        cmdfolder
-    logical                ::        istatus
-    integer                ::        sys
-    call mpi_init(ierror)
-    call mpi_comm_rank(mpi_comm_world, rank, ierror)
-    call mpi_comm_size(mpi_comm_world, size, ierror)
-    sys=1            !1 is windows
-    !sys=0            !0 is linux    
-    senode=rank
-    if (senode==1) then
-        open(500, file='dphi.txt')
-    endif
-    if (senode==0) then
-        open(200, file='count.txt')
-        open(400, file='err.txt')
-        inquire(file='data', exist=istatus)
-        if (.not.istatus) then
-            cmdfolder='mkdir data'
-            call system(trim(cmdfolder))
-        else
-            select case (sys)
-            case(1)
-                cmdfolder='rm -rf data'; call system(trim(cmdfolder))                !linux
-                cmdfolder='mkdir data'; call system(trim(cmdfolder))                !linux
-            case(0)
-                cmdfolder='del data /q'; call system(trim(cmdfolder))                !windows
-            case default
-                open(300, file='remind.txt')
-                    write(300, '(a15)') 'system is wrong'
-                    call mpi_abort(mpi_comm_world, 99, ierror)
-                close(300)
-            end select
-        endif
-        inquire(file='result', exist=istatus)
-        if (.not.istatus) then
-            cmdfolder='mkdir result'
-            call system(trim(cmdfolder))
-        else
-            select case (sys)
-            case(1)
-                cmdfolder='rm -rf result'; call system(trim(cmdfolder))                !linux
-                cmdfolder='mkdir result'; call system(trim(cmdfolder))                !linux    
-            case(0)
-                cmdfolder='del result /q'; call system(trim(cmdfolder))                !windows
-            end select
-        endif
-    endif    
-    call mpi_barrier(mpi_comm_world, ierror)
-    call mpi_barrier(mpi_comm_world, ierror)
-    call mpi_finalize(ierror)
-    end program main
+    use module_common
+    implicit none
+    !real(8)          :: test(2*m,2*m)
+    real(8)          :: test(2*m)
+    
+    !*****************  get data
+    filename = "data.txt"
+    open(10,file = filename)
+    do i = 1,m
+        a_para(i) = dble(i)
+        b_para(i) = dble(m + 1 - i)
+    end do
+    do  i = 1,n
+        x(i) = dble(i)*dt
+    end do
+    y = funx(x,a_para,b_para)
+    do i = 1,n
+        write(10,*)x(i),y(i)
+    end do
+    
+    close(10)
+    !  get parameter
+    call getpara(anew,bnew,x,y)
+    !print "('a = ',<m>f18.5)",anew(:)
+    !print "('b = ',<m>f18.5)",bnew(:)
+
+
+    !  test 
+    !a_para = 3.0
+    !test = equations(a_para,b_para,x,y)
+    !print *,test
+    !test = getpartial(a_para,b_para,x,y)
+    
+
+
+    
+
+end program main
