@@ -1,16 +1,17 @@
 module module_common
     implicit none
-    integer,parameter            :: n   = 100000   ! times of evolution
-    integer,parameter            :: num = 40       ! number of particles
-    integer,parameter            :: fre = 100      ! frequence of printing
+    integer,parameter            :: n   = 100000      ! times of evolution
+    integer,parameter            :: num = 40          ! number of particles
+    integer,parameter            :: fre = 100         ! frequence of printing
     real(8),parameter            :: pi  = 3.141592653 
-    real(8),parameter            :: l   = 7D0     ! size of square
-    real(8),parameter            :: v   = 3D-2    ! velocity
-    real(8),parameter            :: r   = 1D0     ! interation radius
-    real(8)                      :: eta           ! noise
-    real(8)                      :: coor(num,2)   ! position
-    real(8)                      :: angle(num)    ! noise
-    real(8)                      :: vMean         ! mean velocity
+    real(8),parameter            :: l   = 7D0         ! size of square
+    real(8),parameter            :: v   = 3D-2        ! velocity
+    real(8),parameter            :: r   = 1D0         ! interation radius
+    real(8)                      :: eta               ! noise
+    real(8)                      :: coor(num,2)       ! position
+    real(8)                      :: angle(num)        ! noise
+    real(8)                      :: vMean             ! mean velocity
+    real(8)                      :: angleMean(num)    ! mean velocity
     real(8)                      :: t1
     real(8)                      :: t2
 
@@ -180,6 +181,10 @@ function getmean()
                               angle(jj))/dble(times(ii))
                 getmean(jj) = (getmean(jj)*(times(jj) - 1) + &
                               angle(ii))/dble(times(jj))
+                !print *,ii,jj,"distance = ",distance
+                !print "(4f12.4)",coor(ii,1),coor(ii,2),coor(jj,1),coor(jj,2)
+                !print *,statu(ii),statu(jj),mark
+                !pause
             endif ! if ends
 
         enddo !cycle ends
