@@ -15,11 +15,9 @@ program main
         dr(i) = (i - 1)*deltar
     end do
     !  calculate the mayer function
-    do i = 1,m
-        do j = i,m
-            mayfun(i,j,:) = may(d(i + j -1))
-        end do
-    end do
+    may11 = may(d11)
+    may12 = may(d12)
+    may22 = may(d22)
 
     call cpu_time(t1)
 !*********** solve the equation **********
@@ -29,15 +27,13 @@ program main
     print *,"time cost is ",t2 - t1
 
     !  write gr to the file
-    do i = 1,m
-        do j = i,m
             do itmp = 2,n
-                gr(i,j,itmp) = (cr(i,j,itmp) + gamma_r(i,j,itmp))/dr(itmp) + 1.0
+                gr11(itmp) = (cr11(itmp) + gamma_r11(itmp))/dr(itmp) + 1.0
+                gr12(itmp) = (cr12(itmp) + gamma_r12(itmp))/dr(itmp) + 1.0
+                gr22(itmp) = (cr22(itmp) + gamma_r22(itmp))/dr(itmp) + 1.0
             end do
-        end do
-    end do
-    do ii = 1,n
-        write(10,"(4f12.5)")dr(ii),gr(1,1:m,ii),gr(2,m,ii)
+    do ii = 2,n
+        write(10,"(4f12.5)")dr(ii),gr11(ii),gr12(ii),gr22(ii)
     end do
     close(10)
 !}}}

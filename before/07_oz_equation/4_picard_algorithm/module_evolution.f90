@@ -7,104 +7,83 @@ module module_evolution
 !subroutine evolution{{{
 subroutine evolution()
     integer              :: ii
-    integer              :: jj
     real(8)              :: tmp_array(n)
+    real(8)              :: a(3,3)
+    real(8)              :: b(3)
+    real(8)              :: hk(3)
     ! give an initial value of ck
-    do i = 1,m
-        do j = i,m
-                ck(i,j,:) = 1.0
-        end do
-        do j = 1,m - 1
-                ck(i,j,:) = ck(j,i,:)
-        end do
-    end do
-    
-    !  get delta function
-    do i = 1,m
-        do j = i,m
-            if(i == j)then
-                deltafun(i,j) = 1.0
-            else
-                deltafun(i,j) = 0.0
-            endif
-        end do
-    end do
-! OZ equation
+    ck11  = 1.0
+    ck12  = 1.0
+    ck22  = 1.0
+    rate  = 0.1
     times = 0
-    rate  = 0.9
 !solve{{{
     do 
-        times = times + 1
-        if(times > 100)exit
-        do i = 1,m
-            do j = i,m
-                test(i,j,:) = ck(i,j,:)
-            end do
-        end do
+        ! get previous ck
+        test1  = ck11  
+        test2  = ck12  
+        test3  = ck22  
         ! get gamma_k with OZ equation
-        do i = 1,m
-            do j = i,m
-                    gamma_k(i,j,1) = 0.0
-            end do
-        end do
+        gamma_k11 = 1.0
+        gamma_k12 = 1.0
+        gamma_k22 = 1.0
         do ii = 2,n
             ! get the value of array a and b 
-            do i = 1,m
-                do j = 1,m 
-                    a(i,j) = deltafun(i,j)*dk(ii) - ck(i,j,ii)*rho(j)
-                    b(i,j) = dk(ii)*ck(i,j,ii)
-                end do
-            end do
+            a(1,1) = dk(ii) - rho1*ck11(ii)
+            a(1,2) = - rho2*ck12(ii)
+            a(1,3) = 0.0 
+            a(2,1) = - rho1*ck12(ii)
+            a(2,2) = dk(ii) - rho2*ck22(ii)
+            a(2,3) = 0.0
+            a(3,1) = 0.0
+            a(3,2) = - rho1*ck12(ii)
+            a(3,3) = dk(ii) - rho2*ck22(ii)
+            b(1)   = dk(ii)*ck11(ii)
+            b(2)   = dk(ii)*ck12(ii)
+            b(3)   = dk(ii)*ck22(ii)
             ! get hk
-            hk(:,:,ii)     = sol_mat(a,b,m)
+            hk   = sol_equ(a,b,3)
+            hk11 = hk(1)
+            hk12 = hk(2)
+            hk22 = hk(3)
             ! calculate gamma_k
-            do i = 1,m
-                do j = i,m
-                    gamma_k(i,j,ii) = hk(i,j,ii) - ck(i,j,ii)
-                end do
-            end do
+            gamma_k11(ii) = hk11(ii) - ck11(ii)
+            gamma_k12(ii) = hk12(ii) - ck12(ii)
+            gamma_k22(ii) = hk22(ii) - ck22(ii)
+
         end do   ! to get the new gamma_k
         !******************************************************
         ! iteration and judge convergence
+        !******************************************************
         ! calculate gamma_r with inverse fft
-        do i = 1,m
-            do j = i,m
-                do jj = 1,n
-                    tmp_array(jj) = gamma_k(i,j,jj)
-                end do
-                gamma_r(i,j,:) = fst(tmp_array,- 1)
-            end do
-        end do
+        gamma_r11 = fst(gamma_k11,- 1)
+        gamma_r12 = fst(gamma_k12,- 1)
+        gamma_r22 = fst(gamma_k22,- 1)
         ! calculate cr with PY
-        do i = 1,m
-            do j = i,m
-                cr(i,j,:) = (dr(:) + gamma_r(i,j,:))*mayfun(i,j,:)
-            end do
+        do ii = 1,n
+            cr11(ii) = (gamma_r11(ii) + dr(ii))*may11(ii)
+            cr12(ii) = (gamma_r12(ii) + dr(ii))*may12(ii)
+            cr22(ii) = (gamma_r22(ii) + dr(ii))*may22(ii)
         end do
         ! calculate ck with fft
-        do i = 1,m
-            do j = i,m
-                ck(i,j,:) = fst(cr(i,j,:),1)
-            end do
-            do j = 1,i-1
-                ck(i,j,:) = ck(j,i,:)
-            end do
-        end do
-    !    ! judge convergence
-    !    lambda = 0.0
-    !    do i = 1,m
-    !        do j = i,m
-    !            lambda1 = setion_rate(test(i,j,:),ck(i,j,:),rate)
-    !             lambda = lambda + lambda1 
-    !        end do
-    !    end do
-    !    print *,"times = ",times,"lambda = ",lambda
-    !    !print *,times,lambda
-    !    if(mod(times,fre) == 0)then
-    !        print *,rate, "lambda = ",lambda
-    !    endif
-    !    if(lambda < error)exit
-    !    times = times + 1
+        ck11 = fst(cr11,1)
+        ck12 = fst(cr12,1)
+        ck22 = fst(cr22,1)
+        ! judge convergence
+        lambda = 0.0
+        lambda1 = setion_rate(test1,ck11,rate)
+        lambda = lambda + lambda1
+        lambda1 = setion_rate(test2,ck12,rate)
+        lambda = lambda + lambda1
+        lambda1 = setion_rate(test3,ck22,rate)
+        lambda = lambda + lambda1
+        !print *,"times = ",times,"lambda = ",lambda
+        !print *,times,lambda
+        if(mod(times,fre) == 0)then
+            print *,rate, "lambda = ",lambda
+        endif
+        if(lambda < error)exit
+        times = times + 1
     end do  ! end solving
 !}}}
     print *,"lambda = ",lambda
