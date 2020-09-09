@@ -1,26 +1,20 @@
-module module_fst 
-     use module_common
+module module_fst
+    use module_common
+    implicit none
+
 contains
 
-!--****************************************************************--!
-!subroutine fst{{{
-    ! calculate the fourier sine transform
-subroutine fst(od,id,ju)
-    ! id  :   input data
-    ! od  :  output data
-    ! ju     1 for forward transform
-    ! ju    -1 for backward transform
-real*8, parameter              ::  pi = 3.1415926
-integer                        ::  ju
-integer                        ::  i
-integer                        ::  j
-real(8), dimension(0:n-1)      ::  id
-real(8), dimension(0:n-1)      ::  od
-real(8), dimension(0:n-1)      ::  tbr
-real(8), dimension(0:n-1)      ::  tbi
-real(8), dimension(0:n-1)      ::  tor
-real(8), dimension(0:n-1)      ::  toi
-real(8)                        ::  th
+!function fst{{{
+function fst(id,ju)
+integer                       :: ju
+integer                       :: i, j
+real*8, dimension(0:n-1)      :: id
+real*8, dimension(0:n-1)      :: tbr, tbi, tor, toi
+real*8, dimension(0:n-1)      :: fst
+real*8                        :: th
+!%%%%%%%%%%%%%%%%%%NOTICE%%%%%%%%%%%%%%%%%%%%!
+!    dr should be equal to deltar
+!%%%%%%%%%%%%%%%%%%NOTICE%%%%%%%%%%%%%%%%%%%%!
 
 tbr(0)=0.0
 tbi=0.0
@@ -28,145 +22,86 @@ do i=1, n-1
     tbr(i)=sin(pi*dble(i)/dble(n))*(id(i)+id(n-i))+0.5*(id(i)-id(n-i))
 enddo
 
-call fft(l, n, tbr, tbi, tor, toi)
+call fft(l,n,tbr, tbi, tor, toi)
 
-od(0)=0.0
-od(1)=0.5*tor(0)
+fst(0)=0.0
+fst(1)=0.5*tor(0)
 do j=1, n/2-1
     i=j+j
-    od(i)=toi(j)
-    od(i+1)=od(i-1)+tor(j)
+    fst(i)=toi(j)
+    fst(i+1)=fst(i-1)+tor(j)
 enddo
 
 if (ju==1) then
     th=4.0*deltar*pi
-    od(:)=th*od(:)
+    fst(:)=th*fst(:)
 elseif (ju==-1) then
     th=deltak/(2.0*(pi**2.))
-    od(:)=th*od(:)
+    fst(:)=th*fst(:)
 endif
 
-end subroutine fst
+end function fst
 !}}}
-!subroutine may{{{
-    subroutine may(mayer,d)
-        real(8)         ::  mayer(n)
-        real(8)         ::  d
-        real(8)         ::  x
-        integer         ::  itmp
-        do itmp = 1,n
-            x = itmp*deltar
-            if(x <= d)then
-                mayer(itmp) = - 1
-            else
-                mayer(itmp) = 0
-            endif
-        end do
-    end subroutine may
-!}}}
-!subroutine converg{{{
-    !  convergence judgement
-    subroutine converg(lambda,a,b)
-        real(8),intent(out)           :: lambda
-        real(8),intent(in)            :: a(n) 
-        real(8),intent(in)            :: b(n) 
-        integer                       :: itmp
-        real(8)                       :: tmp 
-        
-        tmp = 0
-        do i = 1,n
-           tmp = tmp + abs(a(i) - b(i))
-        end do
-        tmp = tmp/n
-        lambda = tmp
-
-    end subroutine converg
-!}}}
-!subroutine evolution{{{
-    subroutine evolution()
-    do   !stop while convergent 
-            test = ckmm
-
-         hkmm(1) = 0D0  
-        hkffc(1) = 0D0 
-         hkfm(1) = 0D0 
-        hkffb(1) = 0D0 
-         gkmm(1) = 0D0 
-        gkffc(1) = 0D0 
-         gkfm(1) = 0D0 
-        gkffb(1) = 0D0 
-        do i = 2,n
-           !************myself formula**********************
-            hkmm(i) = dk(i)*ckmm(i)/(dk(i) - rhom*ckmm(i))
-            hkffc(i)= dk(i)*ckffc(i)/(dk(i) - rhom*ckffc(i))
-            hkfm(i) = (dk(i)*ckfm(i) + rhom*ckfm(i)*hkmm(i))/&
-                      (dk(i) - rhof*ckffc(i))
-            hkffb(i)= (dk(i)*ckffb(i) + rhom*ckfm(i)*hkfm(i)  &
-                      + rhof*ckffb(i)*hkffc(i))/(dk(i) - rhof*ckffc(i))
-
-            gkmm(i) = hkmm(i)  - ckmm(i)   
-            gkffc(i)= hkffc(i) - ckffc(i)
-            gkfm(i) = hkfm(i)  - ckfm(i) 
-            gkffb(i)= hkffb(i) - ckffb(i)
-        end do   ! i
-        !!print *,hkmm
-        !!pause
-        !  inverse fft for gamma
-        call fst(grmm ,gkmm ,-1)
-        call fst(grffc,gkffc,-1)
-        call fst(grfm ,gkfm ,-1)
-        call fst(grffb,gkffb,-1)
-        !!print *,grmm
-        !!pause
-        !  for crffb
-        do i = 2,n
-          if(dr(i) < dmm) then
-              crffb(i) =  dr(i) + crmm(i) + grmm(i)
-          else
-              crffb(i) = crmm(i)
-          endif
-        end do
-         crmm(1) = 0 
-         crfm(1) = 0 
-        crffc(1) = 0
-        crffb(1) = 0
-        do i = 2,n
-            crmm(i)  = (dr(i)+grmm(i))*maymm(i)
-            crfm(i)  = (dr(i)+grfm(i))*mayfm(i)
-            crffc(i) = (dr(i) + grffb(i) + grffc(i))&
-                *mayff(i) - crffb(i)
-        end do
-        !  fft to calculate c(k)
-        call fst(ckmm ,crmm ,1)
-        call fst(ckffc,crffc,1)
-        call fst(ckfm ,crfm ,1)
-        call fst(ckffb,crffb,1)
-        !  test the convergence
-        call converg(lambda,test,ckmm)
-        !  to abort the cycle
-        times = times + 1
-        if(times == fre)then
-            call cpu_time(t2)
-            print *,"the time is ",t2 - t1
-        endif
-        if(lambda < error) exit
-        if(times > int(2E7))exit
-        !if(mod(times,fre) == 0) print *,lambda
-    enddo 
-    end subroutine evolution
-!}}}
-!********************************************************************
+!!original function fst{{{
+!function fst(id, n, l, ju)
+!integer                                ::            n, l, ju
+!integer                                ::            i, j
+!real*8, dimension(0:n-1)               ::            id
+!real*8, dimension(0:n-1)               ::            tbr, tbi, tor, toi
+!real*8, dimension(0:n-1)               ::            fst
+!real*8, parameter                      ::            pi=3.1415926
+!real*8                                 ::            dr, dk, th
+!
+!dr=0.05
+!dk=(pi/dble(n))/dr
+!
+!tbr(0)=0.0
+!tbi=0.0
+!do i=1, n-1
+!    tbr(i)=sin(pi*dble(i)/dble(n))*(id(i)+id(n-i))+0.5*(id(i)-id(n-i))
+!enddo
+!
+!call fft(l, n, tbr, tbi, tor, toi)
+!
+!fst(0)=0.0
+!fst(1)=0.5*tor(0)
+!do j=1, n/2-1
+!    i=j+j
+!    fst(i)=toi(j)
+!    fst(i+1)=fst(i-1)+tor(j)
+!enddo
+!
+!if (ju==1) then
+!    th=4.0*dr*pi
+!    fst(:)=th*fst(:)
+!elseif (ju==-1) then
+!    th=dk/(2.0*(pi**2.))
+!    fst(:)=th*fst(:)
+!endif
+!
+!end function fst
+!!}}}
 ! fft相关子程序,包括:
-!                 fft: 一维快速富里叶变换
-!                   ifft: 一维快速富里叶逆变换
-!                 butterfly: 快速富里叶变换中所需要的蝶形算法
+!                       fft: 一维快速傅立叶变换
+!                      ifft: 一维快速傅立叶逆变换
+!                 butterfly: 快速傅立叶变换中所需要的蝶形算法
 !********************************************************************
 !subroutine fft{{{
 subroutine fft(l,n,x_real,x_imag,fx_real,fx_imag)
-! 一维快速富里叶变换, n为数据个数，n=2^l，x为输入的时间序列
+! 一维快速傅立叶变换, n为数据个数，n=2^l，x为输入的时间序列
+integer       :: l        !
+integer       :: n        ! n = 2^l
+integer       :: flag     !
+integer       :: ia       !
+integer       :: ib       !
 ! fx为输出的频谱序列，real和imag为相应的实部和虚部
-integer        ::    l,n,flag,ia,ib
-real*8        ::    x_real(n),x_imag(n),fx_real(n),fx_imag(n),x1(2),x2(2)
+real*8        :: x_real(n)
+real*8        :: x_imag(n)
+real*8        :: fx_real(n)
+real*8        :: fx_imag(n)
+real*8        :: x1(2)
+real*8        :: x2(2)
+integer       :: i
 ! 重排输入数据顺序为fft输入顺序：
 !         将输入数据位置转换为2进制数翻转即为fft输入顺序位置的2进制数
 !         需要注意，上述转换位置顺序从0开始到n-1，fortran存储位置顺序
@@ -193,20 +128,23 @@ end do !i
 end subroutine fft 
 !}}}
 !subroutine getfftfreq{{{
-subroutine getfftfreq(n,freq)
+subroutine getfftfreq(length,freq)
 ! 求fft输出顺序相应频率
-real*8    freq(n)
-do i=0,n-1
-    flag=i
-    if(i>n/2) flag=i-n    
-    freq(i+1)=flag*2*3.1415926535/n
+integer   flag
+real*8    length
+real*8    freq(length)
+do i = 0,n - 1
+    flag = i
+    if(i > length/2) flag = i- length
+    freq(i + 1) = flag*2*pi/length
 end do !i
 end subroutine getfftfreq
 !}}}
 !subroutine ifft{{{
 subroutine ifft(l,n,x_real,x_imag,fx_real,fx_imag)
-! 一维快速富里叶变换的逆变换
-integer        ::    l,n,flag,ia,ib
+! 一维快速傅立叶变换的逆变换
+integer       ::    l,n 
+integer       ::    flag,ia,ib
 real*8        ::    x_real(n),x_imag(n),fx_real(n),fx_imag(n)
 real*8        ::    y(n)
 y=-x_imag
@@ -214,21 +152,37 @@ call fft(l,n,x_real,y,fx_real,fx_imag)
 fx_real=fx_real/n
 fx_imag=-fx_imag/n
 end subroutine ifft 
+!********************************************************************
 !}}}
 !subroutine butterfly{{{
-subroutine butterfly(n,x_real,x_imag)
-! 快速富里叶变换需要用到的蝶形算法
-integer        ::    n
-real*8        ::    x_real(n),x_imag(n),fx_real(n),fx_imag(n)
+subroutine butterfly(length,x_real,x_imag)
+! 快速傅立叶变换需要用到的蝶形算法
+integer        ::    length
+real*8        ::    x_real(length),x_imag(length),fx_real(length),fx_imag(length)
 real*8        ::    pi=3.1415926535
 fx_real=x_real;fx_imag=x_imag
-do i=1,n/2
-    x_real(i)=fx_real(i)+fx_real(i+n/2)*cos(2*pi*(i-1)/n)-fx_imag(i+n/2)*sin(2*pi*(i-1)/n)
-    x_imag(i)=fx_imag(i)+fx_imag(i+n/2)*cos(2*pi*(i-1)/n)+fx_real(i+n/2)*sin(2*pi*(i-1)/n)
-    x_real(i+n/2)=fx_real(i)-fx_real(i+n/2)*cos(2*pi*(i-1)/n)+fx_imag(i+n/2)*sin(2*pi*(i-1)/n)
-    x_imag(i+n/2)=fx_imag(i)-fx_imag(i+n/2)*cos(2*pi*(i-1)/n)-fx_real(i+n/2)*sin(2*pi*(i-1)/n)
+do i=1,length/2
+    x_real(i)=fx_real(i)+fx_real(i+length/2)*cos(2*pi*(i-1)/length)&
+              -fx_imag(i+length/2)*sin(2*pi*(i-1)/length)
+    x_imag(i)=fx_imag(i)+fx_imag(i+length/2)*cos(2*pi*(i-1)/length)&
+              +fx_real(i+length/2)*sin(2*pi*(i-1)/length)
+    x_real(i+length/2)=fx_real(i)-fx_real(i+length/2)*cos(2*pi*(i-1)&
+              /length)+fx_imag(i+length/2)*sin(2*pi*(i-1)/length)
+    x_imag(i+length/2)=fx_imag(i)-fx_imag(i+length/2)*cos(2*pi*(i-1)&
+              /length)-fx_real(i+length/2)*sin(2*pi*(i-1)/length)
 end do !i
+!it can also be expressed by the following codes 
+!complex x(n)
+!complex y(n)
+!complex w
+!integer k
+!do k = 1,n/2
+!    w        = exp((0,2*pi*(k-1)/n))
+!    x(k)     = y(k) + y(k+n/2)*w
+!    x(k+n/2) = y(k) - y(k+n/2)*w
+!end do
 end subroutine butterfly
+!********************************************************************
 !}}}
 
 end module module_fst
