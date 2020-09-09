@@ -10,8 +10,11 @@ module module_common
     integer                      :: num
     integer                      :: total
     real(8)                      :: x(m,d)
-    real(8)                      :: a(m,m)
+    real(8)                      :: a(m - 1,m)
     real(8)                      :: b(m)
     real(8)                      :: y(m)
+    real(8)                      :: x_tmp(m - 1,2)
+    real(8)                      :: coef(3) ! coefficient
+    real(8)                      :: bvalue(2)
     character(10)                :: filename 
 end module module_common
