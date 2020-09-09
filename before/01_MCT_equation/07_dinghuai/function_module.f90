@@ -1,57 +1,60 @@
 module function_module
 use parameter_module
-
-
+    
 contains
+    
+!--********************************************--!
+    
+real*8 function aphief(l, i)
+integer                ::                i, l
+    
+    aphief=au(l)*phie(l, i)
+    
+return    
+end function aphief
 
-!--****************************************************************--!
+!--********************************************--!
 
-real*8 function memory(i, l)
-integer            ::            i, l, m
-
-
-memory=0.0
-!$omp parallel private(m) if (i>500)
-!$omp do reduction(+:memory) 
-    do m=1, i
-        memory=memory+ke_me(l, m)*dphi(l, i-m)
-    enddo
+real*8 function memorye(l, i)
+integer                ::                i, l, m        
+ 
+!$omp parallel private(m) if (i>5000)
+!$omp do reduction(+:memorye)
+memorye=0.0d0
+do m=1, i
+    memorye=memorye+ke_mee(l, m)*dphie(l, i-m)
+enddo
 !$omp end do
 !$omp end parallel
-memory=(gammak(l)/ak(l))*memory
+
 return
+end function memorye
 
-end function memory
+!--********************************************--!
 
-!--******************************************************************--!
+real*8 function kernele(l, i)
+integer                ::                i, l, k, p
 
-real*8 function kernel(l)
-integer                ::            l, k, p
-
-kernel=0.0
 if (l==0) then
-    kernel=0.0d0
+    kernele=0.0d0
 else
-!$omp parallel private(k, p)
-!$omp do reduction(+:kernel)
+    kernele=0.0d0
     do k=1, n-1
-        do p=max(1, abs(l-k)), l+k         
+        do p=max(1, abs(l-k)), l+k
             if (p<=n-1) then
-                kernel=kernel+((dble(k)*dble(p))/(dble(l)**5.))*(((dble(l)**2.+dble(k)**2.-dble(p)**2.)*ck(k)+(dble(l)**2.+dble(p)**2.-dble(k)**2.)*ck(p))**2.) &
-                        *sk(l)*sk(k)*sk(p)*phi(k)*phi(p)
-            elseif (p>n-1) then
-                kernel=kernel+((dble(k)*dble(p))/(dble(l)**5.))*(((dble(l)**2.+dble(k)**2.-dble(p)**2.)*ck(k))**2.) &
-                        *sk(l)*sk(k)*1.0*phi(k)*phi(n-1)
+                kernele=kernele+(dble(k*p))*(((dble(k)**2.+dble(l)**2.-dble(p)**2.)*ck(k)+ &
+                       (dble(p)**2.+dble(l)**2.-dble(k)**2.)*ck(p))**2.)*sk(k)*sk(p)*phie(k, i)*phie(p, i)
+            else
+                kernele=kernele+(dble(k*p))*(((dble(k)**2.+dble(l)**2.-dble(p)**2.)*ck(k))**2.)&
+                    *sk(k)*1.0*phie(k, i)*phie(n-1, i)
             endif
         enddo
     enddo
-!$omp end do
-!$omp end parallel
+    kernele=aus(l)*sk(l)*kernele
 endif
-kernel=((rho*(h**3.))/(32.0*(pi**2.)))*kernel
 
-end function kernel
+end function kernele
 
-!--*******************************************************************--!
+!--********************************************--!
 
 end module function_module

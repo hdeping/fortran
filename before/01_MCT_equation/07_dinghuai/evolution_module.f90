@@ -1,178 +1,123 @@
 module evolution_module
 use parameter_module
-use initial_module
-use communicate_module
-use save_data_module
+use function_module
+
 
 contains
 
-!--******************************************--!
 
-subroutine initial_phi()
-integer                            ::                i, j, k
-real*8, dimension(2, 2)            ::                ta, tc
-character(len=10)                  ::                filename
+!--*********************************************--!
 
-    phi(0:n-1)=1.0
-    
-    do l=inode(senode, 1), inode(senode, 2)
-        ke_me(l, 0)=kernel(l)
-    enddo 
-
-    do i=inode(senode, 1), inode(senode, 2)
-        dphi(i, 0)=-ak(i)*gammak(i)*phi(i)*det_time             !-ak(i)*gammak(i)*phi(i)*det_time/(1.0+(gammak(i)/ak(i))*ke_me(i, 0)*det_time)
-    enddo    
-
-    dphi(inode(senode, 1):inode(senode, 2), 0)=dphi(inode(senode, 1):inode(senode, 2), 0)
-
-    write(filename, '(i2.2, i2.2, a3)') istep, senode, 'phi'
-    open(unit=senode+1, file='data/'//trim(filename), form='binary')
-    write(senode+1) phi(inode(senode, 1):inode(senode, 2))
-
-end subroutine initial_phi
-
-!--******************************************--!
-
-subroutine evolution()
-integer                                        ::                    i, j, k, l
-real*8, dimension(:), allocatable            ::                    tem_phi
-real*8                                        ::                    time
-character(len=8)                            ::                    time1
-character(len=10)                            ::                    time2
-character(len=5)                            ::                    time3
-integer(4), dimension(8)                    ::                    time4
-
-    allocate(tem_phi(inode(senode, 1):inode(senode, 2)))
+subroutine initial_phie()
+integer                    ::                l, i
 
     istep=0
 
-    do i=1, sn
+    phie(:, 0)=1.0d0
+    phie(0, 0)=0.0d0
     
-    if (mod(i, wstep)==0.and.senode==0) then
-        call date_and_time(time1, time2, time3, time4)
-        write(200, '(i10, i10, i10, a2, i2, a2, i2, a2, i2, a2, i2, a2, i2, a2, i3, a2)') istep, i/wstep, &
-                    time4(1), '年', time4(2), '月', time4(3), '日', time4(5), '时', time4(6), '分', time4(7), '秒', time4(8), '毫'
-    endif    
-        
-        phi(inode(senode, 1):inode(senode, 2))=phi(inode(senode, 1):inode(senode, 2))+dphi(inode(senode, 1):inode(senode, 2), i-1) 
-        
-        write(senode+1) phi(inode(senode, 1):inode(senode, 2))    
+    do l=1, n-1
+        ke_mee(l, 0)=kernele(l, 0)
+    enddo
+    ke_mee(0, 0)=0.0d0
 
-        call comm_phi()
-        
-        do l=inode(senode, 1), inode(senode, 2)
-            ke_me(l, i)=kernel(l)
-        enddo 
-
-        do l=inode(senode, 1), inode(senode, 2)
-            dphi(l, i)=(-ak(l)*gammak(l)*phi(l)-memory(i, l))*det_time     !/(1.0+(gammak(l)/ak(l))*ke_me(l, 0)*det_time)
-        enddo            
-
+    do i=1, n-1
+        dphie(i, 0)=-(au(i)*phie(i, 0)*det_time)/(1.0d0+bu(i)*ke_mee(i, 0)*det_time)
     enddo
 
-    tem_phi(inode(senode, 1):inode(senode, 2))=phi(inode(senode, 1):inode(senode, 2))
+    dphie(0, 0)=0.0d0
+    phia(:)=0.0d0    
 
-    close(senode+1)
+end subroutine initial_phie
 
-    call binary_doc(istep, 1)
+!--*********************************************--!
 
-    call out_data(istep)
+subroutine eq_evolution()
+integer                                        ::                        i, l, k
+integer                                        ::                        istep, istart
+real*8, dimension(:, :), allocatable        ::                        tphie, tke_mee
 
-    phi(:)=0.0; dphi(inode(senode, 1):inode(senode, 2), :)=0.0; ke_me(inode(senode, 1):inode(senode, 2), 1:sn)=0.0
+allocate(tphie(0:n-1, 1:sn/2))
+allocate(tke_mee(0:n-1, 1:sn/2-1))
 
-    do istep=1, ini
-        
+do istep=0, ini
+
+    if (istep==0) then
+        istart=1
+    else
+        istart=sn/stn
         det_time=det_time*dble(stn)
+    endif
 
-        call binary_doc(istep, -1)
+    do i=istart, sn
 
-        call get_dphi(istep)
+        phie(:, i)=phie(:, i-1)+dphie(:, i-1)
 
-        phi(inode(senode, 1):inode(senode, 2))=tem_phi(inode(senode, 1):inode(senode, 2))
-        
-        do i=sn/stn, sn-1            
-        print*, istep, i
-            if (mod(i, wstep)==0.and.senode==0) then
-                call date_and_time(time1, time2, time3, time4)
-                write(200, '(i10, i10, i10, a2, i2, a2, i2, a2, i2, a2, i2, a2, i2, a2, i3, a2)') istep, i/wstep, &
-                            time4(1), '年', time4(2), '月', time4(3), '日', time4(5), '时', time4(6), '分', time4(7), '秒', time4(8), '毫'
-            endif
+        phie(0, i)=0.0
 
-            call comm_phi()
-            
-            if (istep==ini.and.i==sn-1.and.senode==0) then
-                open(154, file='k.txt')
-                do ii=0, n-1
-                    write(154, '(2f18.8)') dble(ii)*dk, phi(ii)
-                enddo
-                close(154)
-            endif
-
-            do l=inode(senode, 1), inode(senode, 2)
-                ke_me(l, i)=kernel(l)
-            enddo             
-
-            do l=inode(senode, 1), inode(senode, 2)            
-                dphi(l, i)=(-ak(l)*gammak(l)*phi(l)-memory(i, l))*det_time     !/(1.0+(gammak(l)/ak(l))*ke_me(l, 0)*det_time)                
-            enddo                
-
-            phi(inode(senode, 1):inode(senode, 2))=phi(inode(senode, 1):inode(senode, 2))+dphi(inode(senode, 1):inode(senode, 2), i)
-            write(node+senode+1) phi(inode(senode, 1):inode(senode, 2))    
-
+        do l=1, n-1
+            ke_mee(l, i)=kernele(l, i)
         enddo
-
-        tem_phi(inode(senode, 1):inode(senode, 2))=phi(inode(senode, 1):inode(senode, 2))        
-
-        close(node+senode+1)
-
-        call binary_doc(istep, 1)
-
-        call out_data(istep)
-
-        phi(:)=0.0; dphi(inode(senode, 1):inode(senode, 2), :)=0.0; ke_me(inode(senode, 1):inode(senode, 2), 1:sn)=0.0
+        
+        do l=1, n-1
+            dphie(l, i)=(-aphief(l, i)-bu(l)*memorye(l, i))*det_time/(1.0d0+bu(l)*ke_mee(l, 0)*det_time)
+        enddo
+        
+        if (istep==0) then
+            do l=1, n-1
+                phia(l)=phia(l)+(phie(l, i)**2.)*det_time
+            enddo
+        else
+            if (i/=istart) then
+                do l=1, n-1
+                    phia(l)=phia(l)+(phie(l, i)**2.)*det_time
+                enddo                
+            endif
+        endif
 
     enddo
 
-    deallocate(tem_phi)
+    do i=1, n-1
+        do j=istart, sn
+            write(i, '(3e25.16e3)') det_time*dble(j), phie(i, j), phia(i)
+        enddo
+    enddo
 
-end subroutine evolution
-
-!--******************************************--!
-
-subroutine get_dphi(istep)
-integer                                        ::                i, istep
-real*8, dimension(:), allocatable        ::                temphi, f_temphi, b_temphi    
-character(len=10)                            ::                filename
-
-allocate(temphi(inode(senode, 1):inode(senode, 2)))
-allocate(f_temphi(inode(senode, 1):inode(senode, 2)))
-allocate(b_temphi(inode(senode, 1):inode(senode, 2)))
-
-write(filename, '(i2.2, i2.2, a3)') istep-1, senode, 'phi'
-open(unit=senode+1, file='data/'//trim(filename), form='binary')
-write(filename, '(i2.2, i2.2, a3)') istep, senode, 'phi'
-open(unit=node+senode+1, file='data/'//trim(filename), form='binary') 
-
-do i=0, sn
-    read(senode+1) temphi(inode(senode, 1):inode(senode, 2))
-    if (mod(i, stn)==0) then
-        f_temphi=temphi
-        write(node+senode+1) f_temphi(:)
-        if (i/=0) then
-            dphi(:, i/stn-1)=f_temphi(:)-b_temphi(:)
+    do i=1, sn/2
+        tphie(:, i)=phie(:, 2*i)
+        if (i/=sn/2) then
+            tke_mee(:, i)=ke_mee(:, 2*i)
         endif
-        b_temphi=f_temphi
-    endif
+    enddo
+
+    phie(:, 1:sn/2)=tphie(:, :)
+    ke_mee(:, 1:sn/2-1)=tke_mee(:, :)
+
+    do i=0, sn/2-1
+        dphie(:, i)=phie(:, i+1)-phie(:, i)
+    enddo
+
 enddo
 
-    close(senode+1)
+deallocate(tphie)
+deallocate(tke_mee)
+do i=1, n-1
+    close(i)
+enddo
 
-deallocate(temphi)
-deallocate(f_temphi)
-deallocate(b_temphi)
+do k=1, n-1
+    sk_neq(k)=sk(k)+0.5*df*(dble(k)**2.)*(1.0-sk(k))*phia(k)
+enddo
 
-end subroutine get_dphi
+open(1, file='skneq.txt')
+do i=1, n-1
+    write(1, '(2f25.16)') dble(i)*dk, sk_neq(i)
+enddo
+close(1)
 
-!--*****************************************--!
+end subroutine eq_evolution
+
+!--**********************************************--!
+
 
 end module evolution_module
