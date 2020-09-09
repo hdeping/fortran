@@ -3,6 +3,8 @@ module module_common
     integer,parameter            :: n   = 100000      ! times of evolution
     integer,parameter            :: num = 40          ! number of particles
     integer,parameter            :: fre = 100         ! frequence of printing
+    integer,parameter            :: nl  = 7           ! 
+    integer,parameter            :: ml  = 7
     real(8),parameter            :: pi  = 3.141592653 
     real(8),parameter            :: l   = 7D0         ! size of square
     real(8),parameter            :: v   = 3D-2        ! velocity
@@ -54,9 +56,9 @@ subroutine update()
     do ii = 1,num
         coor(ii,1) = coor(ii,1) + v*cos(angle(ii))
         coor(ii,2) = coor(ii,2) + v*sin(angle(ii))
+        coor(:,1)  = mod(coor(:,1),l)
+        coor(:,2)  = mod(coor(:,2),l)
     enddo !cycle ends
-    coor(:,1) = ch_range(coor(:,1),num,l)
-    coor(:,2) = ch_range(coor(:,2),num,l)
     ! update the direction
     ! get mean angle
     meanAngle = getmean()
@@ -64,8 +66,8 @@ subroutine update()
         call random_number(x1)
         delta_theta = eta*(x1 - 0.5)
         angle(ii)   = meanAngle(ii) + delta_theta
+        angle(ii)   = mod(angle(ii),2.0*pi)
     enddo !cycle ends
-    angle = ch_range(angle,num,2.0*pi)
 end subroutine update
 !}}}
 !function getmean{{{
@@ -192,28 +194,6 @@ function getmean()
 !}}}
      
 end function getmean
-!}}}
-!function ch_range{{{
-function ch_range(a,n,inter)
-    integer,intent(in)           :: n
-    real(8),intent(in)           :: inter
-    real(8),intent(in)           :: a(n)
-    integer                      :: ii
-    real(8)                      :: ch_range(n)
-    ch_range = a
-
-    do ii = 1,n
-        if ( ch_range(ii) < 0 )then
-            do  while(ch_range(ii) < 0)
-                ch_range(ii) = ch_range(ii) + inter
-            enddo !cycle ends
-        elseif ( ch_range(ii) > inter )then
-            do  while(ch_range(ii) > inter)
-                ch_range(ii) = ch_range(ii) - inter
-            enddo !cycle ends
-        endif ! if ends
-    enddo !cycle ends
-end function ch_range
 !}}}
 !function getv{{{
 ! get the mean velocity
