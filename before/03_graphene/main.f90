@@ -37,7 +37,7 @@ dET2 = dEiT_B2-dEiH_B2
 
 write(fName,"('growthCnt.dat')")
 open(13,file = fName)
-do irun = 0,0 !20
+do irun = 0,20 !20,修改  !！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！
     nt = 0
     c_ci(1) = 0.01    
     !ii = 5
@@ -50,9 +50,9 @@ do irun = 0,0 !20
     call drawBonds()
     call drawSites()    
 !    call drawSites_growthStatus()    
-    open(10,file = 'count.dat')
-    write(fName,"('cnt',I2.2,'.dat')") 20-irun
-    open(12,file = fName)
+    !open(10,file = 'count.dat')                              !  修改
+    !write(fName,"('cnt',I2.2,'.dat')") 20-irun
+    !open(12,file = fName)
 !    do while(nt<nT_tot)
     do while(sum(cnt_growth)<100000)
         !更新各参数
@@ -101,8 +101,8 @@ do irun = 0,0 !20
         endif
 !        write(13,"(7G18.9)") 0.05*real(20-irun),sum(cnt_growth)
     enddo
-    close(10)
-    close(12)
+    !close(10)
+    !close(12)
     write(13,"(7G18.9)") 0.05*real(20-irun),cnt_growth/sum(cnt_growth)
 !    call freqCNT(irun,freq)
 enddo !irun

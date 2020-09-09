@@ -34,7 +34,7 @@ do ii = pos_graphene,pos_front+1
                 if(loc>ny_ltc) loc = loc-ny_ltc
                 if(status(ii,loc) = =1) goto 100                        ! 若该位置被占据，则当前ci构型不可用且所有i更大的ci构型都不可用
                 if(status(ii-1,loc)/ = 1) goto 100                    ! 检查当前点是否超过临列已占据的坐标
-                call getSiteType(ii,loc)                            ! 记录该构型包含多少高能量位
+                call getSiteType(ii,loc)                                ! 记录该构型包含多少高能量位
                 if(mod(ii+loc,2) = =0) flag=flag+type_site
                 if(type_site = =1.and.j_c==1) then
                     call getSiteClass(ii,jj)
@@ -52,7 +52,7 @@ do ii = pos_graphene,pos_front+1
             flag1 = flag1+status(ii,loc)                                ! 检查构型下端临位是否都被占据
             if(flag1 = =2) then 
                 if(j_c<5) flag = -7+flag                                ! 若上下端临位都被占据，对于i<4的构型无论是否包含高能量位，都按低能量位处理
-                                                                    ! 否则在考虑能量问题时，仍需检查该构型是否包含高能量位
+                                                                                ! 否则在考虑能量问题时，仍需检查该构型是否包含高能量位
             endif
             if(flag<1) then
                 n_cfgH(j_c) =  n_cfgH(j_c)+1                            ! 不包含高能量位或者上下端临位都被占据，则该构型为低能量构型

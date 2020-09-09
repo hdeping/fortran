@@ -60,8 +60,8 @@ integer(2),parameter        ::    x_scr = 10                ! location of start 
 integer(2),parameter        ::    y_scr = 10
 integer(2),parameter        ::    w_scr = 1200                ! width of the graphic, Unit: pixel
 integer(2),parameter        ::    h_scr = 800                ! heigth of the graphic, Unit: pixel
-integer                    ::    hh_grid                    ! half heigth of a grid on screen, Unit: pixel
-integer                    ::    len_grid                ! length of a grid on screen, Unit: pixel
+integer                            ::    hh_grid                    ! half heigth of a grid on screen, Unit: pixel
+integer                            ::    len_grid                ! length of a grid on screen, Unit: pixel
 integer,parameter        ::    color_body = 1 !3                
 integer,parameter        ::    color_surface = 1 !6                
 integer,parameter        ::    color_active = 1 !2                    
