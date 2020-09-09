@@ -130,9 +130,9 @@ end subroutine fft
 !subroutine getfftfreq{{{
 subroutine getfftfreq(length,freq)
 ! 求fft输出顺序相应频率
-integer          ::  flag
-integer          ::  length
-real(8)          ::  freq(length)
+integer   flag
+real*8    length
+real*8    freq(length)
 do i = 0,n - 1
     flag = i
     if(i > length/2) flag = i- length

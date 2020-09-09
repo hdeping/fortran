@@ -6,18 +6,18 @@ module module_common
 !*********   variables  ********************************
 !variables{{{
 !parameters{{{
-    integer,parameter           ::   l    = 13
+    integer,parameter           ::   l    = 10
     integer,parameter           ::   n    = 2**l
     integer,parameter           ::  fre   =  int(1E3)
     real(8),parameter           ::   pi   = 3.141592653 
     !real(8),parameter           ::  top   = 10.24
-    real(8),parameter           :: deltar = 0.001
+    real(8),parameter           :: deltar = 0.01
     real(8),parameter           :: deltak = pi/deltar/dble(n)
     real(8),parameter           :: error  = 1E-8              !  for the differences
     ! diameters
     real(8),parameter           :: dmm    = 1.0                
     real(8),parameter           :: dff    = 1.0                
-    real(8),parameter           :: dss    = 1.0
+    real(8),parameter           :: dss    = 1.0   
     !real(8),parameter           :: dfm    = (dmm + dff)/2.0   
     !real(8),parameter           :: dsm    = (dss + dmm)/2.0   
     !real(8),parameter           :: dsf    = (dss + dff)/2.0   
@@ -25,7 +25,7 @@ module module_common
     real(8),parameter           :: dsm    = 1.0   
     real(8),parameter           :: dsf    = 1.0   
 
-    real(8),parameter           :: rhom   = 0.4              !  the density of matrix
+    real(8),parameter           :: rhom   = 0.3              !  the density of matrix
     real(8),parameter           :: rhof   = 0.3                !  the density of fluid 
     real(8),parameter           :: gold   = (sqrt(5.0) - 1.0)/2.0  ! golden rate
 !}}}

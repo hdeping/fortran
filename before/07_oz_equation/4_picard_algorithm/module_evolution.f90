@@ -40,6 +40,7 @@ subroutine evolution_mm()
     do i = 1,n
         hkmm(i) = ckmm(i) + gkmm(i)
     end do
+    print *,"lambda = ",lambda
     !print *,"iteration times is ",times
 end subroutine evolution_mm
 !}}}
@@ -56,27 +57,23 @@ subroutine evolution()
         endif
     end do
     ckffb = fst(crffb, 1)
+    rate = 0.9
     !***********************************
-    ckfm  = 1.0
-    ckff  = 1.0
-    rate = 0.1
     do  
         test  = ckfm 
         test1 = ckff
         gkfm(1) = 0.0
         gkff(1) = 0.0
         do   jj = 2,n 
-        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            ckffc(jj) = ckff(jj) - ckffb(jj)
-            hkffc(jj) = dk(jj)*ckffc(jj)/(dk(jj) - rhom*ckffc(jj))
-            hkfm(jj)  = (dk(jj)*ckfm(jj) + rhom*ckfm(jj)*hkmm(jj))/&
-                        (dk(jj) - rhof*ckffc(jj))
-            hkffb(jj) = (dk(jj)*ckffb(jj) + rhom*ckfm(jj)*hkfm(jj) + &
-                        rhof*ckffb(jj)*hkffc(jj))/(dk(jj) - rhof*ckffc(jj))
-            gkffc(jj) = hkffc(jj) - ckffc(jj)
-            gkffb(jj) = hkffb(jj) - ckffb(jj)
-            gkfm(jj)  = hkfm(jj)  - ckfm(jj)
-            gkff(jj)  = gkffc(jj) + gkffb(jj)
+           chik     = dk(jj) + rhom*hkmm(jj)
+           ckffc(jj)= ckff(jj) - ckffb(jj)
+           gkfm(jj) = ckfm(jj)*chik/(dk(jj) - rhof*ckffc(jj))&
+                      - ckfm(jj)
+           gkff(jj) = (dk(jj)**2.0*ckff(jj) + rhom*ckfm(jj)**2.0*chik -&
+                      dk(jj)*rhof*ckffc(jj)**2.0)/(dk(jj) - &
+                      rhof*ckffc(jj))**2.0 - ckff(jj)
+           gkffb(jj)= (dk(jj)**2.0*ckff(jj) + rhom*ckfm(jj)**2.0*chik)/&
+                      (dk(jj) - rhof*ckffc(jj))**2.0 - ckffb(jj)
         end do
         ! inverse fft to calculate grfm and grff
         grfm  = fst(gkfm, - 1)
@@ -94,12 +91,16 @@ subroutine evolution()
         ! judge the convergence and exit the cycle
         !lambda  = conver(test ,ckfm)
         !lambda1 = conver(test1,ckff)
-        !call random_number(rate)
-        !rate = rate*0.9 + 0.1
-        !lambda  = setion_rate(test ,ckfm,rate)
-        !lambda1 = setion_rate(test1,ckff,rate)
-        lambda  = judge(test ,ckfm)
-        lambda1 = judge(test1,ckff)
+        !if(mod(times,6*fre) == 0 .and. rate > 0.05)then
+        !    rate = rate - 0.01
+        !endif
+        !if(times/fre == 6 )then
+        !    rate = 1.01
+        !elseif(times/fre == 10)then
+        !    rate = .01
+        !endif
+        lambda  = setion_rate(test ,ckfm,rate)
+        lambda1 = setion_rate(test1,ckff,rate)
         !lambda2 = conver(test,ckffb)
         lambda = max(lambda,lambda1)
         times = times + 1
@@ -107,10 +108,21 @@ subroutine evolution()
         if(mod(times,fre) == 0)then
             print *,"lambda = ",lambda
         endif
-        !if(mod(times,fre) == 0)exit
+        !if(times == 3000)exit
         if(lambda < error)exit
+        !times = times + 1
+        !if (mod(times,1000) == 0)then
+        !    print *,"lambda = ",lambda
+        !    pause
+        !endif
     end do
-            print *,"lambda = ",lambda
+    do jj = 1,n
+    hkfm(jj) =  gkfm(jj)  + ckfm(jj) 
+    hkff(jj) =  gkff(jj)  + ckff(jj) 
+    hkffb(jj)=  gkffb(jj) + ckffb(jj)
+    hkffc(jj)=  gkffc(jj) + ckffc(jj)
+    end do
+    print *,"lambda = ",lambda
 end subroutine evolution
 !}}}
 !subroutine evolution_particle{{{
@@ -118,8 +130,9 @@ subroutine evolution_particle()
    print *,"single particle evolution" 
    !!!!!!!!***********************************
     !  get crsfb
-    rate = 0.5
-    do i = 1,n
+    rate  = 0.1
+    times = 0
+    do i  = 1,n
         if(dr(i) < dsf)then
             crsfb(i) = dr(i) + crmm(i) + grmm(i)
         else
@@ -166,11 +179,12 @@ subroutine evolution_particle()
             hkssc(jj) = (dk(jj)*ckssc(jj) + rhof*cksfc(jj)*hksfc(jj))&
                         /dk(jj)
             ! get gamma_k 
-            gksm(jj)  = hksm(jj)  - cksm(jj)
             gksfb(jj) = hksfb(jj) - cksfb(jj)
-            gksfc(jj) = hksfc(jj) - cksfc(jj)
             gkssb(jj) = hkssb(jj) - ckssb(jj)
+            gksfc(jj) = hksfc(jj) - cksfc(jj)
             gkssc(jj) = hkssc(jj) - ckssc(jj)
+            !****************************************
+            gksm(jj)  = hksm(jj)  - cksm(jj)
             gksf(jj)  = gksfc(jj) + gksfb(jj)
             gkss(jj)  = gkssc(jj) + gkssb(jj)
         end do
@@ -200,18 +214,18 @@ subroutine evolution_particle()
         lambda1 = setion_rate(test1,cksf,rate)
         lambda2 = setion_rate(test2,ckss,rate)
         lambda = max(lambda,lambda1,lambda2)
-        times = times + 1
         ! change rate
         !if(mod(times,10*fre) == 0)then
         !    rate = rate - 0.01
         !endif
+        times = times + 1
         if(mod(times,fre) == 0)then
             print *,"lambda = ",lambda
         endif
         !if(times == 3000)exit
         if(lambda < error)exit
-        times = times + 1
     end do
+    print *,"lambda = ",lambda
 end subroutine evolution_particle
 !}}}
 !subroutine evolution_gr{{{
@@ -264,6 +278,7 @@ function may(d)
     end do
 end function may
 !}}}
+! judge the convergence
 !function judge{{{
 ! compare the difference between two arrays
 ! judge the convergence
