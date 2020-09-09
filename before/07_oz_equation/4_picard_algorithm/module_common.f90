@@ -3,8 +3,7 @@
 module module_common
 
     implicit none 
-!*********   variables  ********************************
-!variables{{{
+!parameters{{{
     integer,parameter           ::   l    = 10
     integer,parameter           ::   n    = 2**l
     integer,parameter           ::  fre   =  int(1E6)
@@ -16,9 +15,14 @@ module module_common
     real(8),parameter           :: dmm    = 1.0                !  m-m 
     real(8),parameter           :: dff    = 1.0                !  f-f
     real(8),parameter           :: dfm    = (dmm + dff)/2.0    !  f-m
-    real(8),parameter           :: rhom   = 1.3             !  the density of matrix
-    real(8),parameter           :: rhof   = 0.1                !  the density of fluid 
-    real(8),parameter           :: gold   = (sqrt(5.0) - 1.0)/2.0  ! golden rate
+    real(8),parameter           :: rhom   = 0.8              !  the density of matrix
+    real(8),parameter           :: rhof   = 0.3                !  the density of fluid 
+    !real(8),parameter           :: gold   = (sqrt(5.0) - 1.0)/2.0  ! golden rate
+    real(8),parameter           :: gold   = 0.1  ! golden rate
+    real(8),parameter           :: lj     = 1.0  ! para for LJ
+    real(8),parameter           :: beta   = 1.0  ! para for LJ
+!}}}
+!variables{{{
     !  variables for fft
     integer                     :: status 
     !type(dfti_descriptor), pointer :: my_desc1_handle
@@ -42,9 +46,6 @@ module module_common
     real(8)                     ::  dk(n)     ! k
     real(8)                     ::  dr(n)     ! r
     real(8)                     ::  chik      ! chi
-    real(8)                     ::  rate
-    real(8)                     ::  rate1
-    real(8)                     ::  rate2
 
     ! for convenience, h for H, c for C
     ! H = r*h, C = r*c
@@ -92,12 +93,13 @@ module module_common
     real(8)                     ::  g_rff(n)      !  fluid-fluid
     real(8)                     ::  g_rffb(n)     !  fluid-fluid(connected)
     real(8)                     ::  g_rffc(n)     !  fluid-fluid(block)
+! sk static structure factor
+    real(8)                     ::  skmm(n)
 
     integer                     ::  i        
     integer                     ::  j        
     integer                     ::  times        
     integer                     ::  ierror
-    integer                     ::  cnum
     character(20)               ::  filename 
     real(8)                     ::  xtmp
     real(8)                     ::  ytmp
