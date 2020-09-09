@@ -1,20 +1,33 @@
 program main
     use module_common
     implicit none
-    real(8)        :: a(n,n)
-    real(8)        :: c(n,n)
 
+    filename = "code.txt"
+    open(10,file = filename,status = "old",iostat = ierror)
+    filename = "code_c.txt"
+    open(20,file = filename,status = "old",iostat = ierror)
 
-    call random_seed()
-    a(1,:) = (/1.0,3.0,4.0/)
-    a(2,2:3) = (/2.0,5.0/)
-    a(3,3) = 1.0
-    do i = 1,n
-        do j = 1,n - i 
-            a(i,j) = a(j,i)
-        enddo !cycle ends
+    call cpu_time(t1)
+    j = 0
+    do 
+        read(10,*,iostat = ierror)i
+        if ( ierror /= 0 )then
+            exit
+        endif ! if ends
+        j = j + i
     enddo !cycle ends
-    
-    c = mat_sqare_root(a,n)
+    print *,j 
+    j = 0
+    do 
+        read(20,*,iostat = ierror)i
+        if ( ierror /= 0 )then
+            exit
+        endif ! if ends
+        j = j + i
+    enddo !cycle ends
+    print *,j 
+    call cpu_time(t2)
+    print *,"time cost is ", t2 - t1
+
 
 end program main
