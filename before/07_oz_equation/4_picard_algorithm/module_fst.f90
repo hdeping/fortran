@@ -1,5 +1,6 @@
 module module_fst
     use module_common
+    implicit none
 
 contains
 
@@ -10,12 +11,10 @@ integer                       :: i, j
 real*8, dimension(0:n-1)      :: id
 real*8, dimension(0:n-1)      :: tbr, tbi, tor, toi
 real*8, dimension(0:n-1)      :: fst
-real*8                        :: dr, dk, th
+real*8                        :: th
 !%%%%%%%%%%%%%%%%%%NOTICE%%%%%%%%%%%%%%%%%%%%!
 !    dr should be equal to deltar
 !%%%%%%%%%%%%%%%%%%NOTICE%%%%%%%%%%%%%%%%%%%%!
-dr=0.04
-dk=(pi/dble(n))/dr
 
 tbr(0)=0.0
 tbi=0.0
@@ -34,10 +33,10 @@ do j=1, n/2-1
 enddo
 
 if (ju==1) then
-    th=4.0*dr*pi
+    th=4.0*deltar*pi
     fst(:)=th*fst(:)
 elseif (ju==-1) then
-    th=dk/(2.0*(pi**2.))
+    th=deltak/(2.0*(pi**2.))
     fst(:)=th*fst(:)
 endif
 
@@ -131,11 +130,13 @@ end subroutine fft
 !subroutine getfftfreq{{{
 subroutine getfftfreq(length,freq)
 ! 求fft输出顺序相应频率
-real*8    freq(n)
-do i=0,n-1
-    flag=i
-    if(i>n/2) flag=i-n    
-    freq(i+1)=flag*2*pi/n
+integer   flag
+real*8    length
+real*8    freq(length)
+do i = 0,n - 1
+    flag = i
+    if(i > length/2) flag = i- length
+    freq(i + 1) = flag*2*pi/length
 end do !i
 end subroutine getfftfreq
 !}}}

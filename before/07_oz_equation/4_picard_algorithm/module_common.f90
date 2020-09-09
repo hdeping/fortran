@@ -3,18 +3,22 @@
 module module_common
 
     implicit none 
-    integer,parameter           ::   l    = 5
+!*********   variables  ********************************
+!variables{{{
+    integer,parameter           ::   l    = 10
     integer,parameter           ::   n    = 2**l
     integer,parameter           ::  fre   =  int(1E3)
     real(8),parameter           ::   pi   = 3.141592653 
-    real(8),parameter           :: deltar = 0.04 
-    real(8),parameter           :: deltak = pi/dble(n)/deltar 
-    real(8),parameter           :: error  = 1E-8      !  for the differences
-    real(8),parameter           :: dmm    = 1.0       !  m-m 
-    real(8),parameter           :: dff    = 1.0       !  f-f
-    real(8),parameter           :: dfm    = (dmm + dff)/2.0  !  f-m
-    real(8),parameter           :: rhom   = 0.6       !  the density of matrix
-    real(8),parameter           :: rhof   = 0.1       !  the density of fluid 
+    !real(8),parameter           ::  top   = 10.24
+    real(8),parameter           :: deltar = 0.01
+    real(8),parameter           :: deltak = pi/deltar/dble(n)
+    real(8),parameter           :: error  = 1E-10              !  for the differences
+    real(8),parameter           :: dmm    = 1.0                !  m-m 
+    real(8),parameter           :: dff    = 1.0                !  f-f
+    real(8),parameter           :: dfm    = (dmm + dff)/2.0    !  f-m
+    real(8),parameter           :: rhom   = 0.8              !  the density of matrix
+    real(8),parameter           :: rhof   = 0.1                !  the density of fluid 
+    real(8),parameter           :: gold   = (sqrt(5.0) - 1.0)/2.0  ! golden rate
     !  variables for fft
     integer                     :: status 
     !type(dfti_descriptor), pointer :: my_desc1_handle
@@ -25,14 +29,16 @@ module module_common
     real(8)                     ::  t1
     real(8)                     ::  t2
     real(8)                     ::  eta
-    real(8)                     ::  xtmp
-    real(8)                     ::  lambada1  ! hardsphere c(x)
-    real(8)                     ::  lambada2  ! hardsphere c(x)
+    real(8)                     ::  lambda1  ! hardsphere c(x)
+    real(8)                     ::  lambda2  ! hardsphere c(x)
     real(8)                     ::  lambda    ! judge the convergence
-    real(8)                     ::  maymm(n)  ! test for the convergence
-    real(8)                     ::  mayfm(n)  ! test for the convergence
-    real(8)                     ::  mayff(n)  ! test for the convergence
-    real(8)                     ::  test(n)   ! mayer function 
+    real(8)                     ::  maymm(n)  ! mayer function for m-m 
+    real(8)                     ::  mayfm(n)  ! mayer function for f-m 
+    real(8)                     ::  mayff(n)  ! mayer function for f-f 
+    real(8)                     ::  test(n)   ! test for the convergence 
+    real(8)                     ::  test1(n)  ! test for the convergence 
+    real(8)                     ::  test2(n)  ! test for the convergence 
+    real(8)                     ::  test_cr(n)  ! test for the convergence 
     real(8)                     ::  dk(n)     ! k
     real(8)                     ::  dr(n)     ! r
     real(8)                     ::  chik      ! chi
@@ -87,6 +93,12 @@ module module_common
     integer                     ::  i        
     integer                     ::  j        
     integer                     ::  times        
+    integer                     ::  ierror
     character(20)               ::  filename 
+    real(8)                     ::  xtmp
+    real(8)                     ::  ytmp
+    real(8)                     ::  tmp
+    real(8)                     ::  ctmp
+!}}}
 
 end module module_common
