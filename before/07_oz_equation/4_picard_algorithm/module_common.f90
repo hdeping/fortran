@@ -7,13 +7,13 @@ module module_common
     integer,parameter           ::   n    = 2**l
     integer,parameter           ::  fre   =  int(1E6)
     real(8),parameter           ::   pi   = 3.141592653 
-    real(8),parameter           :: deltar = 0.01
+    real(8),parameter           :: deltar = 0.02
     real(8),parameter           :: deltak = pi/dble(n)/deltar 
-    real(8),parameter           :: error  = 1E-12              !  for the differences
+    real(8),parameter           :: error  = 1E-8               !  for the differences
     real(8),parameter           :: dmm    = 1.0                !  m-m 
     real(8),parameter           :: dff    = 1.0                !  f-f
     real(8),parameter           :: dfm    = (dmm + dff)/2.0    !  f-m
-    real(8),parameter           :: rhom   = 0.7                !  the density of matrix
+    !real(8),parameter           :: rhom   = 0.4                !  the density of matrix
     real(8),parameter           :: rhof   = 0.1                !  the density of fluid 
     !  variables for fft
     integer                     :: status 

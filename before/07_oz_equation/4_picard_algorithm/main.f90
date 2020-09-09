@@ -9,12 +9,6 @@ program main
     real(8)    :: c(n)
     
 
-    filename = "gr.txt"
-    open(10,file = filename)
-    filename = "cr.txt"
-    open(20,file = filename)
-    filename = "sk.txt"
-    open(30,file = filename)
     !  initial the k and r
     do i = 1,n
         dk(i) = (i - 1)*deltak
@@ -24,7 +18,12 @@ program main
     maymm = may(dmm)
 !********************************************************** 
 
-    !  solve the equation
+    !  solve the equation with diffrent rhoms
+!do ii = 1,18
+    ii = 0
+    write(filename,"('g_rmm',i2.2,'.txt')")ii
+    rhom = 0.05  !*dble(ii)
+    open(10,file = filename)
     call cpu_time(t1)
     call evolution()
     call cpu_time(t2)
@@ -36,18 +35,23 @@ program main
     do i = 2,n 
        g_rmm(i) = (crmm(i)  +  grmm(i) )/dr(i)  + 1
     end do   !  i
-    ! calculate crmm
-    crmm(1) = 0.0
-    do i = 2,n
-        crmm(i) = crmm(i)/dr(i)
-    end do
     ! print the results
     do i = 1,n
         write(10,*)dr(i),g_rmm(i) 
-        write(20,*)dr(i),crmm(i) 
     end do
     print *,"time cost is ",t2 - t1
-
     close(10)
+!end do   ! ii
     !print *,hkmm(10)
 end program main
+!test the fst program{{{
+    !do i = 1,n
+    !    a(i) = (i - 1)*1.0
+    !end do
+    !write(*,*)"before forward backward fft"
+    !b = fst(a,n,l,1)
+    !c = fst(b,n,l,-1)
+    !do i = 1,n
+    !    write(*,"(i3,3f18.9)")i,a(i),b(i),c(i)
+    !end do
+!}}}

@@ -131,10 +131,9 @@ subroutine evolution()
         lambda = judge(test,ckmm)
         if(lambda < error)exit
         times = times + 1
-
-        !if(times > int(1E4))exit
-        if(mod(times,10) == 0)then
+        if(mod(times,fre) == 0)then
             print *,lambda
+            pause
         endif
     end do
 end subroutine evolution
