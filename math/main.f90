@@ -1,58 +1,40 @@
 program main
-    implicit none
-    real(8),parameter  :: pre   = 2.0/sqrt(3.141592653)
-    integer,parameter  :: total = int(1E4)
-    real(8),parameter  :: pi    = 3.141592653
-    real(8),parameter  :: delta = pi/dble(total)
-    real(8),parameter  :: dt    = 0.01
-    real(8)            :: x         ! the up-limit
-    integer            :: m   ! for the summation cycle
-    integer            :: i   ! for the main cycle
-    integer            :: j   ! for the main cycle
-    real               :: t1
-    real               :: t2
-    character(20)      :: filename
+    use mkl95_lapack
 
-    !do i = 0,10
-    !    write(filename,"('bessel',i2.2,'.txt')")i
-    !    open(10,file = filename)
-    !    call cpu_time(t1)
-    !    do j = 1,1000
-    !        x = j*dt
-    !        write(10,"(2f12.6)")x,besjn(x,i)
-    !    end do
-    !    call cpu_time(t2)
-    !    close(10)
-    !    print *,"time cost is ",t2 - t1
-    !end do
-    filename = "rdata.txt"
-    open(10,file = filename)
-    do i = 1,100
-        do j = 1,100
-            x = sqrt(dble(i**2.0 + j**2.0))*dt
-            write(10,"(3f12.6)")i*dt,j*dt,besjn(x,0)
-        end do
-    end do
-    close(10)
-    contains
-!{{{
-function besjn(x,n)
-    integer,intent(in)            :: n
-    real(8),intent(in)            :: x 
-    real(8)                       :: besjn
-    real(8)                       :: tau
-    real(8)                       :: tmp
-    integer                       :: ii
+  implicit none
+  integer,parameter     :: n=3
+  integer,parameter     :: lda=n
+  integer,parameter     :: lwork=2*n-1
+  character             :: jobz
+  character             :: uplo
+  integer               :: info=0
+  real(8)               :: rwork(3*n-2)
+  real(8)               :: w(n)
+  complex(16)           :: a(lda,n)
+  complex(16)           :: work(lwork)
+  complex(16)           :: b(5,3)
+  a(1,:) = (/1,2,3/)
+  a(1,:) = (/2,4,5/)
+  a(1,:) = (/3,5,6/)
+  b(2:4,:) = a
 
-    
-    tmp = 0.0
-    do ii = 1,total
-        tau = ii*delta
-        tmp = tmp + delta*cos(n*tau - x*sin(tau))
-    end do
-    besjn = tmp/pi
-end function besjn
-!}}}
-!{{{
-!}}}
+ !输出中a的每一列是一个本征矢。
+ !call zheev('v', 'u', n, a, lda, w, work, lwork, rwork, info )
+
+  call heev(a, w, 'V','U',info )
+  print*, w
+  print*, '--------------------   --------------------    ------------------'
+  print*, real(a(1,:))
+  print*, real(a(2,:))
+  print*, real(a(3,:))
+  print*
+  !call zheev('v', 'u', n, b(2:5,:), 4, w, work, lwork, rwork, info )
+  print*, w
+  print*, '--------------------   --------------------    ------------------'
+  print '(3f25.15)', real(b(1,:))
+  print '(3f25.15)', real(b(2,:))
+  print '(3f25.15)', real(b(3,:))
+  print '(3f25.15)', real(b(4,:))
+  print '(3f25.15)', real(b(5,:))
+
 end program main
