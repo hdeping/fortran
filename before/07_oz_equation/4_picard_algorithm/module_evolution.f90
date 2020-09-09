@@ -4,9 +4,13 @@ module module_evolution
 !subroutine evolution{{{
 ! iteration method to solve OZ equation
 subroutine evolution()
-    times = 0
     ckmm = 1.0
     call cpu_time(t1)
+        !rho = 1.06 + jj*0.01
+        !times = 0
+        !print *,"rho = ",rho
+        !write(filename,"('data',i3.3,'.txt')")106 + jj
+        !open(100,file = filename)
     do 
         test    = ckmm
         test_cr = crmm
@@ -34,45 +38,63 @@ subroutine evolution()
         if(lambda < error)exit
         !print *,"rhom = ",rhom
         !pause
-    end do
-    print *,"iteration times is ",times
+    end do   ! 
+    !print *,"times = ",times,"lambda = ",lambda
+    !do i = 2,n
+    !    write(100,*)dr(i),(grmm(i) + crmm(i))/dr(i) 
+    !end do
+    !    close(100)
+    !end do  ! jj
 end subroutine evolution
 !}}}
-!subroutine evolution_gr{{{
+!subroutine evolution_new{{{
 ! iteration method to solve OZ equation
-subroutine evolution_gr()
-    times = 0
+subroutine evolution_new()
     ckmm = 1.0
     call cpu_time(t1)
-    do 
-        test    = grmm
-        test_cr = crmm
-        ! calculate crmm with PY closure
-        do i = 1,n
-            crmm(i) = (dr(i) + grmm(i))*maymm(i)
-        end do
-        ! fft to calculate ckmm
-        ckmm = fst(crmm,1)
-        gkmm(1) = 0.0
-        do i = 2,n
-            gkmm(i) = rhom*ckmm(i)**2.0/(dk(i) - rhom*ckmm(i))
-        end do
-        ! inverse fft to calculate grmm
-        grmm = fst(gkmm,- 1)
-        ! judge the convergence
-        ! get a mean value of ckmm  (golden setion)
-         times = times + 1
 
-        lambda = conver(test,grmm)
-        !if(times > int(1E4))exit
-        if(mod(times,1000) == 0)then
-            print *,"lambda = ",lambda
-        endif
-        if(lambda < error)exit
-        !print *,"rhom = ",rhom
-        !pause
-    end do
-end subroutine evolution_gr
+    do jj = 1,96
+        rho = 0.1 + jj*0.01
+        times = 0
+        print *,"rho = ",rho
+        write(filename,"('data',i3.3,'.txt')")10 + jj
+        open(100,file = filename)
+        do 
+            test    = ckmm
+            test_cr = crmm
+            gkmm(1) = 0.0
+            do i = 2,n
+                gkmm(i) = rho*ckmm(i)**2.0/(dk(i) - rho*ckmm(i))
+            end do
+            ! inverse fft to calculate grmm
+            grmm = fst(gkmm,- 1)
+            ! calculate crmm with PY closure
+            do i = 1,n
+                crmm(i) = (dr(i) + grmm(i))*maymm(i)
+            end do
+            ! fft to calculate ckmm
+            ckmm = fst(crmm,1)
+            ! judge the convergence
+            ! get a mean value of ckmm  (golden setion)
+             times = times + 1
+
+            lambda = conver(test,ckmm)
+            !if(times > int(1E4))exit
+            if(mod(times,1000) == 0)then
+                print *,"lambda = ",lambda
+            endif
+            if(lambda < error)exit
+            !print *,"rhom = ",rhom
+            !pause
+        end do   ! 
+        print *,"times = ",times,"lambda = ",lambda
+        do i = 2,n
+            tmp = (grmm(i) + crmm(i))/dr(i) + 1.0
+            write(100,*)rho,dr(i),tmp
+        end do
+        close(100)
+    end do  ! jj
+end subroutine evolution_new
 !}}}
 !function may{{{
 function may(d)
@@ -104,23 +126,6 @@ function judge(a,b)
     !judge = judge/dble(n)
     
 end function judge
-!}}}
-!function bisetion{{{
-! compare the difference between two arrays
-! judge the convergence
-function bisetion(a,b)
-    real(8),intent(in)      :: a(n)
-    real(8),intent(inout)   :: b(n)
-    real(8)                 :: bisetion
-    integer                 :: ii
-    
-    bisetion = judge(a,b)
-    do ii = 1,n 
-        b(ii) = (a(ii) + b(ii))/2.0
-    end do
-    !judge = judge/dble(n)
-    
-end function bisetion
 !}}}
 !function conver{{{
 !  judge convergence with golden setion 
