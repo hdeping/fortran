@@ -16,14 +16,12 @@ program main
 
     do itmp  = 1,ncut
         read(10,*,iostat = ierror)xtmp, sk(itmp)
-        sk(itmp) = sk(itmp)/smul
         !print *,sk(itmp)
         !pause
         if(ierror /= 0)exit
     end do
     close(10)
-    write(filename,"('fq',i2.2,'.txt')")int(smul)
-    !filename = "data.txt"
+    write(filename,"('fq',i5.5,'.txt')")int(1000*smul)
     open(10,file = filename)
     
     ! get final f
@@ -32,7 +30,7 @@ program main
     print *,"lambda = ",lambda
 
     do itmp = 1,ncut
-        write(10,"(4f18.6)")dk(itmp),finalf(itmp)/sk(itmp)
+        write(10,"(2f18.6)")dk(itmp),finalf(itmp)
     end do
     close(10)
 
