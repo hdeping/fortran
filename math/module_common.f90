@@ -37,26 +37,22 @@ subroutine getpara(a,b,x,y)
 
 
     ! initial parameter
-    call random_number(para((m+1):2*m))
-    para(1:m) = 0.5 
+    call random_number(para(:))
     times = 0
     do 
         equ   = equations(para(1:m),para((m+1):2*m),x,y)
         jacob = getpartial(para(1:m),para((m+1):2*m),x,y)
         med   = sol_equ(jacob,equ,2*m)
-        !print *,"jacobi  = "
         !do ii = 1,2*m
         !    print *,jacob(ii,:)
         !end do
-        !print *,"equations = "
         !print *,equ(:)
-        print *,"medium = "
-        print *,med(:)
+        !print *,med(:)
         !pause
         !  judge convergence
         lambda = judge(med,2*m)
         if(lambda < error)exit
-        times  = times + 1
+        times = times + 1
         if(mod(times,fre) == 0)then
             print *,"lambda = ",lambda
             !print *,med(:)
@@ -64,8 +60,6 @@ subroutine getpara(a,b,x,y)
         endif
         !  get new para
         para = para - med
-        print *,para
-        pause
     end do
     print *,"lambda = ",lambda
 
@@ -85,7 +79,7 @@ function getpartial(a,b,x,y)
     real(8)               :: equ(2*m)
     real(8)               :: var_x
     real(8)               :: getpartial(2*m,2*m)
-    real(8)               :: tmp
+    real(8)               :: tmp = 0.0
     integer               :: ii
     integer               :: jj
     integer               :: i1
@@ -140,9 +134,9 @@ function getpartial(a,b,x,y)
                tmp = tmp + a(j1)*x(ii)**2.0*exp(- (b(i1) + b(j1))*x(ii))
            end do
            if(i1 == j1)then
-                do jj = 1,n
-                    tmp = tmp - x(jj)**2.0*exp(- b(i1)*x(jj))*ynew(jj)
-                end do
+               do jj = 1,n
+                   tmp = tmp - x(jj)**2.0*exp(- b(ii)*x(jj))*ynew(jj)
+               end do
            endif
            getpartial(i1 + m,j1 + m) = tmp 
         end do
@@ -168,8 +162,8 @@ function equations(a,b,x,y)
     ynew  = funx(x,a,b)
     do ii = 1,n
         ynew(ii) =  y(ii) - ynew(ii)
-        !print *,ynew(ii)
-        !pause
+        print *,ynew(ii)
+        pause
     end do
     !  get 1~m
     do ii = 1,m

@@ -21,15 +21,15 @@ program main
     
     close(10)
     !  get parameter
-    call getpara(anew,bnew,x,y)
+    !call getpara(anew,bnew,x,y)
     !print "('a = ',<m>f18.5)",anew(:)
     !print "('b = ',<m>f18.5)",bnew(:)
 
 
     !  test 
     !a_para = 3.0
-    !test = equations(a_para,b_para,x,y)
-    !print *,test
+    test = equations(a_para,b_para,x,y)
+    print *,test
     !test = getpartial(a_para,b_para,x,y)
     
 
