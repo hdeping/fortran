@@ -1,38 +1,7 @@
 module module_judge
-      use module_common
-      use module_algebra
-      contains
-!function may{{{
-function may(d)
-    real(8),intent(in)         :: d
-    real(8)                    :: may(n)
-    integer                    :: ii
-    do ii = 1,n
-        if(dr(ii) < d)then
-             may(ii) = - 1
-         else
-             may(ii) = 0
-         endif
-    end do
-end function may
-!}}}
-!*************************************************************************************
-!*********** several kinds of methods for judging convergence ************************
-!function asum{{{
-! compare the difference between two arrays
-! judge the convergence
-function asum(a)
-    real(8),intent(in)      :: a(n)
-    real(8)                 :: asum
-    integer                 :: ii
-    
-    asum = 0
-    do ii = 1,n 
-        asum = asum + abs(a(ii))
-    end do
-    
-end function asum
-!}}}
+    use module_common
+    contains
+!****** judge the convergence **************
 !function judge{{{
 ! compare the difference between two arrays
 ! judge the convergence
@@ -66,6 +35,23 @@ function bisetion(a,b)
     !judge = judge/dble(n)
     
 end function bisetion
+!}}}
+!function setion_rate{{{
+! compare the difference between two arrays
+! judge the convergence
+function setion_rate(a,b,rate)
+    real(8),intent(in)      :: a(n)
+    real(8),intent(inout)   :: b(n)
+    real(8),intent(in)      :: rate
+    real(8)                 :: setion_rate
+    integer                 :: ii
+    
+    setion_rate = judge(a,b)
+    do ii = 1,n 
+        b(ii) = a(ii)*(1.0 - rate) + b(ii)*rate
+    end do
+    
+end function setion_rate
 !}}}
 !function conver{{{
 !  judge convergence with golden setion 

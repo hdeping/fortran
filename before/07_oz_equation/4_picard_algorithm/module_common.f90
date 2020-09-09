@@ -3,96 +3,72 @@
 module module_common
 
     implicit none 
+!parameters{{{
     integer,parameter           ::   l    = 10
     integer,parameter           ::   n    = 2**l
-    integer,parameter           ::  fre   =  int(1E6)
+    integer,parameter           ::   m    = 2 !number components
+    integer,parameter           ::  fre   =  int(1E3)
     real(8),parameter           ::   pi   = 3.141592653 
     real(8),parameter           :: deltar = 0.01
     real(8),parameter           :: deltak = pi/dble(n)/deltar 
-    real(8),parameter           :: error  = 1E-12               !  for the differences
-    real(8),parameter           :: dmm    = 1.0                !  m-m 
-    real(8),parameter           :: dff    = 1.0                !  f-f
-    real(8),parameter           :: dfm    = (dmm + dff)/2.0    !  f-m
-    real(8),parameter           :: rhom   = 1.08              !  the density of matrix
-    real(8),parameter           :: rhof   = 0.1                !  the density of fluid 
-    real(8),parameter           :: gold   = (sqrt(5.0) - 1.0)/2.0  ! golden rate
-    !  variables for fft
-    integer                     :: status 
-    !type(dfti_descriptor), pointer :: my_desc1_handle
-    !type(dfti_descriptor), pointer :: my_desc2_handle
-    ! variables for OZ equation  
+    real(8),parameter           :: error  = 1E-8      !  for the diwwerences
+    ! the diameter
+    real(8),parameter           :: d11    = 1.0       !  
+    real(8),parameter           :: d22    = 1.0      !  
+    real(8),parameter           :: d12    = (d11 + d22)/2.0  
+    real(8),parameter           :: d(m*m) = (/d11,d12,d22,0D0/)
+    ! the number dendity
+    real(8),parameter           :: rho1   = 0.5
+    real(8),parameter           :: rho2   = 0.3
+    real(8),parameter           :: rho(m) = (rho1,rho2)
+!}}}
+!common variables{{{
     real(8)                     ::  k
     real(8)                     ::  r
+    real(8)                     ::  dk(n)     ! k
+    real(8)                     ::  dr(n)     ! r
     real(8)                     ::  t1
     real(8)                     ::  t2
     real(8)                     ::  eta
-    real(8)                     ::  lambda1  ! hardsphere c(x)
-    real(8)                     ::  lambda2  ! hardsphere c(x)
-    real(8)                     ::  lambda    ! judge the convergence
-    real(8)                     ::  maymm(n)  ! mayer function for m-m 
-    real(8)                     ::  mayfm(n)  ! mayer function for f-m 
-    real(8)                     ::  mayff(n)  ! mayer function for f-f 
-    real(8)                     ::  test(n)   ! test for the convergence 
-    real(8)                     ::  test1(n)  ! test for the convergence 
-    real(8)                     ::  test2(n)  ! test for the convergence 
-    real(8)                     ::  dk(n)     ! k
-    real(8)                     ::  dr(n)     ! r
-    real(8)                     ::  chik      ! chi
-
-    ! for convenience, h for H, c for C
-    ! H = r*h, C = r*c
-! the total correlation function
-    !  k space  ,h(k)
-    real(8)                     ::  hkmm(n)      !  matrix-matrix          
-    real(8)                     ::  hkfm(n)      !  matrix-fluid 
-    real(8)                     ::  hkffb(n)     !  fluid-fluid(connected)
-    real(8)                     ::  hkffc(n)     !  fluid-fluid(block)
-    !  r space   h(r)
-    real(8)                     ::  hrmm(n)      !  matrix-matrix          
-    real(8)                     ::  hrfm(n)      !  matrix-fluid 
-    real(8)                     ::  hrffb(n)     !  fluid-fluid(connected)
-    real(8)                     ::  hrffc(n)     !  fluid-fluid(block)
-! the indirect correlation function
-    !  k space  gamma(k)
-    real(8)                     ::  gkmm(n)      !  matrix-matrix
-    real(8)                     ::  gkfm(n)      !  matrix-fluid 
-    real(8)                     ::  gkffb(n)     !  fluid-fluid(connected)
-    real(8)                     ::  gkffc(n)     !  fluid-fluid(block)
-    real(8)                     ::  gkff(n)      !  total fluid-fluid
-    !  r space  gamma(r)
-    real(8)                     ::  grmm(n)      !  matrix-matrix
-    real(8)                     ::  grfm(n)      !  matrix-fluid 
-    real(8)                     ::  grffb(n)     !  fluid-fluid(connected)
-    real(8)                     ::  grffc(n)     !  fluid-fluid(block)
-    real(8)                     ::  grff(n)      !  total fluid-fluid
-
-! the direct correlation function
-    !  k space   c(k)
-    real(8)                     ::  ckmm(n)      !  matrix-matrix
-    real(8)                     ::  ckfm(n)      !  matrix-fluid 
-    real(8)                     ::  ckff(n)      !  fluid-fluid
-    real(8)                     ::  ckffb(n)     !  fluid-fluid(connected)
-    real(8)                     ::  ckffc(n)     !  fluid-fluid(block)
-    !  r space   c(r)
-    real(8)                     ::  crmm(n)      !  matrix-matrix
-    real(8)                     ::  crfm(n)      !  matrix-fluid 
-    real(8)                     ::  crff(n)      !  fluid-fluid
-    real(8)                     ::  crffb(n)     !  fluid-fluid(connected)
-    real(8)                     ::  crffc(n)     !  fluid-fluid(block)
-! pair correlation function
-    real(8)                     ::  g_rmm(n)      !  matrix-matrix
-    real(8)                     ::  g_rfm(n)      !  matrix-fluid 
-    real(8)                     ::  g_rff(n)      !  fluid-fluid
-    real(8)                     ::  g_rffb(n)     !  fluid-fluid(connected)
-    real(8)                     ::  g_rffc(n)     !  fluid-fluid(block)
-
+    real(8)                     ::  xtmp
+    real(8)                     ::  deltafun(m,m) ! delta function
+    real(8)                     ::  a(m,m)
+    real(8)                     ::  b(m,m)
+    real(8)                     ::  bnew(m)
+    real(8)                     ::  x(m)
+    real(8)                     ::  x1
+    real(8)                     ::  rate
+    ! judge the convergence
+    real(8)                     ::  lambda
+    real(8)                     ::  lambda1
+    real(8)                     ::  test(m,m,n)   
+    real(8)                     ::  test1(n)   
+    real(8)                     ::  test2(n)   
+    ! mayer function  
+    real(8)                     ::  mayfun(m,m,n)  ! p-p
     integer                     ::  i        
     integer                     ::  j        
     integer                     ::  times        
     character(20)               ::  filename 
-    real(8)                     ::  xtmp
-    real(8)                     ::  ytmp
-    real(8)                     ::  tmp
-    real(8)                     ::  ctmp
+!}}}
+    ! variables for OZ equation  
+!OZ{{{
+    ! for convenience, h for H, c for C
+    !  k space 
+    real(8)                     ::  hk(m,m,n)      
+    real(8)                     ::  ck(m,m,n)      
+    real(8)                     ::  gamma_k(m,m,n)      
+    !  r space                       
+    real(8)                     ::  hr(m,m,n)      
+    real(8)                     ::  cr(m,m,n)      
+    real(8)                     ::  gamma_r(m,m,n)      
+    ! g(r)
+    real(8)                     ::  gr(m,m,n)      
+    ! structure factor
+    real(8)                     ::  sk(m,m,n)      
+!}}}
+    ! variables of prism
+
+
 
 end module module_common
