@@ -1,6 +1,10 @@
 program main
-    use module_fst
+    use module_fst 
+    integer  itmp
 
+    real(8)    :: a(n)
+    real(8)    :: b(n)
+    real(8)    :: c(n)
     !print *,10
     
 
@@ -34,8 +38,8 @@ program main
         dk(1) =  0.0
         dr(1) =  0.0
     do i = 2,n
-        dk(i) = i*deltak
-        dr(i) = i*deltar
+        dk(i) = (i - 1)*deltak
+        dr(i) = (i - 1)*deltar
     end do
     !  call the mayer function
     call may(maymm,dmm)
@@ -44,21 +48,60 @@ program main
 !********************************************************** 
 
     !  solve the equation
-    !call evolution()
-    do i = 1,n
-        b1(i) = (i - 1)
-    end do
-    call fft(b1,b2)
-    print *,"     b2    "
-    do i = 1,n
-        print *,b2(i)
-    end do
-    !call fft(a1,a2,a3,a4)
-    !call fft(a3,a4,b,c)
-    !do i = 1,n
-    !    write(*,"(i4,6f12.5)")i,a1(i),a2(i),a3(i),a4(i),b(i),c(i)
-    !end do
+    call cpu_time(t1)
 
+    !call evolution()
+
+    call cpu_time(t2)
+
+    do i = 1,n
+        a(i) = (i - 1)*1.0
+    end do
+    write(*,*)"before forward backward fft"
+    call fst(b,a,1)
+    call fst(c,b,-1)
+    do i = 1,n
+        write(*,"(i3,3f12.6)")i,a(i),b(i),c(i)
+    end do
+    a(1) = 1
+    a(n) = b(l) 
+    do i = 1,n-2
+        if(mod(i,2) == 1)then
+            a(i+2) = a(i) + b(l-1)
+        else
+            num = i
+            do j = 1,l-1
+               k = mod(num,2)
+               if(k == 0) exit
+               num = num/2
+            end do
+            j = j-1
+            a(i+1) = a(i) - sum(c(1:j)) + c(j+1)
+        endif
+    end do
+     
+
+
+
+!********************************************************** 
+
+!    print *,"lambda is ",lambda
+!    !  write ck to the file
+!    crff(:) = crffb(:) + crffc(:)
+!    grff(:) = grffb(:) + grffc(:)
+!    do i = 1,n
+!       g_rmm(i) = (crmm(i)  +  grmm(i) )/dr(i)  + 1
+!       g_rfm(i) = (crfm(i)  +  grfm(i) )/dr(i)  + 1
+!       g_rff(i)=  (crff(i)  +  grff(i) )/dr(i)  + 1
+!    end do   !  i
+!    do i = 1,n
+!        write(10,*)dr(i),g_rmm(i) 
+!        write(20,*)dr(i),g_rfm(i) 
+!        write(30,*)dr(i),g_rffb(i) 
+!        write(40,*)dr(i),g_rff(i)
+!    end do
+!    write(50,*)"times  = ",times
+!    write(50,*)"lambda = ",lambda
 
     close(50)
     close(40)
@@ -67,24 +110,3 @@ program main
     close(10)
     !print *,hkmm(10)
 end program main
-!before {{{
-!********************************************************** 
-
-!        print *,"lambda is ",lambda
-!        !  write ck to the file
-!        crff(:) = crffb(:) + crffc(:)
-!        grff(:) = grffb(:) + grffc(:)
-!        do i = 1,n
-!           g_rmm(i) = (crmm(i)  +  grmm(i) )/dr(i)  + 1
-!           g_rfm(i) = (crfm(i)  +  grfm(i) )/dr(i)  + 1
-!           g_rff(i)=  (crff(i)  +  grff(i) )/dr(i)  + 1
-!        end do   !  i
-!        do i = 1,n
-!            write(10,*)dr(i),g_rmm(i) 
-!            write(20,*)dr(i),g_rfm(i) 
-!            write(30,*)dr(i),g_rffb(i) 
-!            write(40,*)dr(i),g_rff(i)
-!        end do
-!        write(50,*)"times  = ",times
-!        write(50,*)"lambda = ",lambda
-!}}}
