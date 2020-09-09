@@ -1,6 +1,5 @@
 module module_fst
     use module_common
-    implicit none
 
 contains
 
@@ -130,13 +129,11 @@ end subroutine fft
 !subroutine getfftfreq{{{
 subroutine getfftfreq(length,freq)
 ! 求fft输出顺序相应频率
-integer   flag
-real*8    length
-real*8    freq(length)
-do i = 0,n - 1
-    flag = i
-    if(i > length/2) flag = i- length
-    freq(i + 1) = flag*2*pi/length
+real*8    freq(n)
+do i=0,n-1
+    flag=i
+    if(i>n/2) flag=i-n    
+    freq(i+1)=flag*2*pi/n
 end do !i
 end subroutine getfftfreq
 !}}}

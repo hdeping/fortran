@@ -8,19 +8,15 @@ module module_common
     integer,parameter           ::   n    = 2**l
     integer,parameter           ::  fre   =  int(1E6)
     real(8),parameter           ::   pi   = 3.141592653 
-    !real(8),parameter           ::  top   = 10.24
     real(8),parameter           :: deltar = 0.01
-    real(8),parameter           :: deltak = pi/deltar/dble(n)
-    real(8),parameter           :: error  = 1E-8               !  for the differences
+    real(8),parameter           :: deltak = pi/dble(n)/deltar 
+    real(8),parameter           :: error  = 1E-9              !  for the differences
     real(8),parameter           :: dmm    = 1.0                !  m-m 
     real(8),parameter           :: dff    = 1.0                !  f-f
     real(8),parameter           :: dfm    = (dmm + dff)/2.0    !  f-m
-    real(8),parameter           :: rhom   = 0.8              !  the density of matrix
-    real(8),parameter           :: rhof   = 0.3                !  the density of fluid 
-    !real(8),parameter           :: gold   = (sqrt(5.0) - 1.0)/2.0  ! golden rate
-    real(8),parameter           :: gold   = 0.1  ! golden rate
-    real(8),parameter           :: lj     = 1.0  ! para for LJ
-    real(8),parameter           :: beta   = 1.0  ! para for LJ
+    real(8),parameter           :: rhom   = 1.1              !  the density of matrix
+    real(8),parameter           :: rhof   = 0.1                !  the density of fluid 
+    real(8),parameter           :: gold   = (sqrt(5.0) - 1.0)/2.0  ! golden rate
 !}}}
 !variables{{{
     !  variables for fft
@@ -42,9 +38,9 @@ module module_common
     real(8)                     ::  test(n)   ! test for the convergence 
     real(8)                     ::  test1(n)  ! test for the convergence 
     real(8)                     ::  test2(n)  ! test for the convergence 
-    real(8)                     ::  test_cr(n)  ! test for the convergence 
     real(8)                     ::  dk(n)     ! k
     real(8)                     ::  dr(n)     ! r
+    real(8)                     ::  out_grmm(n)     ! checking final results
     real(8)                     ::  chik      ! chi
 
     ! for convenience, h for H, c for C
@@ -93,18 +89,20 @@ module module_common
     real(8)                     ::  g_rff(n)      !  fluid-fluid
     real(8)                     ::  g_rffb(n)     !  fluid-fluid(connected)
     real(8)                     ::  g_rffc(n)     !  fluid-fluid(block)
-! sk static structure factor
-    real(8)                     ::  skmm(n)
+! structure factors s(k)
+    real(8)                     ::  skmm(n)      !  matrix-matrix
+    real(8)                     ::  skfm(n)      !  matrix-fluid 
+    real(8)                     ::  skff(n)      !  fluid-fluid
+    real(8)                     ::  skffb(n)     !  fluid-fluid(connected)
+    real(8)                     ::  skffc(n)     !  fluid-fluid(block)
+
 
     integer                     ::  i        
     integer                     ::  j        
     integer                     ::  times        
-    integer                     ::  ierror
     character(20)               ::  filename 
     real(8)                     ::  xtmp
     real(8)                     ::  ytmp
-    real(8)                     ::  tmp
-    real(8)                     ::  ctmp
-!}}}
+    !}}}
 
 end module module_common
