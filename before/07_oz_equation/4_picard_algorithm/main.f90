@@ -10,6 +10,8 @@ program main
 
     filename = "g_r.txt"
     open(10,file = filename)
+    filename = "sk.txt"
+    open(20,file = filename)
     filename = "check.txt"
     open(40,file = filename)
 
@@ -28,20 +30,12 @@ program main
     maymm = may(dmm)
     mayfm = may(dfm)
     mayff = may(dff)
-
 !********************************************************** 
 
     !  solve the equation
-    ckmm  = 1.0
-    ckfm  = 1.0
-    ckff  = 1.0
-    !ckffb = 1.0
-    times = 0
     call cpu_time(t1)
     ! get hkmm
-    !call evolution_mm()
-    call evolution_mm_NR()
-    ! get others
+    call evolution_mm()
     call evolution()
     !call evolution_gr()
     call cpu_time(t2)
@@ -62,22 +56,25 @@ program main
     !  write ck to the file
     g_rmm(1) = 0.0
 
+
     do i = 2,n 
-       g_rmm(i) = hrmm(i)/dr(i)  + 1
-       g_rfm(i) = (crfm(i)  +  grfm(i) )/dr(i)  + 1
-       g_rff(i) = (crff(i)  +  grff(i) )/dr(i)  + 1
+        g_rmm(i) = (crmm(i)  +  grmm(i) )/dr(i)  + 1.0 
+        g_rfm(i) = (crfm(i)  +  grfm(i) )/dr(i)  + 1.0
+        g_rff(i) = (crff(i)  +  grff(i) )/dr(i)  + 1.0
+        skmm(i)  = trho*xrate1**2.0*hkmm(i)/dk(i)  + 1.0 
+        skfm(i)  = trho*xrate1*xrate2*(ckfm(i)  +  gkfm(i) )/dk(i)
+        skff(i)  = trho*xrate2**2.0*(ckff(i)  +  gkff(i) )/dk(i)  + 1.0 
     end do   !  i
     ! print the results
-    write(10,*)"    r    ","    g_rmm    ","    g_rfm    ","    g_rff    "
+    write(10,*)"r","g_rmm","g_rfm","g_rff"
     do i = 2,n
         write(10,"(4f18.8)")dr(i),g_rmm(i),g_rfm(i),g_rff(i) 
+        write(20,"(4f18.8)")dk(i),skmm(i),skfm(i),skff(i) 
     end do
     print *,"time cost is ",t2 - t1
 
     close(10)
     close(20)
-    close(30)
-    close(40)
 !}}}
     
 end program main
