@@ -2,25 +2,26 @@ program main
     use module_common
     implicit none
 
-    real(8)   x,y
+    real                h
+    real                d
+    real                theta
+    real                r
+    real                s
 
-    
-    filename = "data.txt"
-    open(10, file = filename)
-    
+    write(*,*)"input h = "
+    read(*,*)h
+    write(*,*)"input d = "
+    read(*,*)d
 
-    x = - 2.99
-    do i = 1,600
-        x = x + 0.01
-        if ( x < 0.0 )then
-            y = - x*(x - 2.0)
-        else
-            y = x*(x - 2.0)
-        endif ! if ends
-        write(10,*)x,y
-        
-    enddo !cycle ends
+    r = (d**2.0 + h**2.0)/(2.0*h)
+    theta = asin(d/r)
+
+    s = theta*r**2.0 - d*(d**2.0 - h**2.0)/(2.0*h)
+
+    write(*,*)"r is ",r
+    write(*,*)"theta is ",theta
+    write(*,*)"area is ",s
+
+
      
-
-    close(10)
 end program main
