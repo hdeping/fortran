@@ -6,16 +6,21 @@ program main
     real(8)        :: a(n)
     real(8)        :: b(n)
     real(8)        :: c(n)
-  
+    character(7)   :: ch_b = "       "
+    
 
-    filename = "gr.txt"
+    filename = "g_r.txt"
     open(10,file = filename)
-    filename = "cr.txt"
+    filename = "gr.txt"
     open(20,file = filename)
-    filename = "gk.txt"
+    filename = "cr.txt"
     open(30,file = filename)
-    filename = "ck.txt"
+    filename = "hr.txt"
     open(40,file = filename)
+    filename = "check.txt"
+    open(50,file = filename)
+    filename = "sk.txt"
+    open(60,file = filename)
     !filename = "test.txt"
     !open(50,file = filename)
     !  initial the k and r
@@ -30,42 +35,23 @@ program main
     !  solve the equation
     call cpu_time(t1)
     call evolution()
-    !call evolution_gamma_r()
+    !call evolution_old()
     call cpu_time(t2)
-    print *,"time cost is ",t2 - t1
-    !************ check the result *************************
-    !call check_cr()
-    call check_gr()
-    !******************************************************
 
-!print g(r){{{
     print *,"lambda is ",lambda
     !  write ck to the file
     g_rmm(1) = 0.0
 
-    do i = 2,n
-        grmm(i) = grmm(i)/dr(i)
-        grfm(i) = grfm(i)/dr(i)
-        grff(i) = grff(i)/dr(i)
-        crmm(i) = grmm(i)/dr(i)
-        crfm(i) = grfm(i)/dr(i)
-        crff(i) = grff(i)/dr(i)
-        gkmm(i) = grmm(i)/dk(i)
-        gkfm(i) = grfm(i)/dk(i)
-        gkff(i) = grff(i)/dk(i)
-        ckmm(i) = grmm(i)/dk(i)
-        ckfm(i) = grfm(i)/dk(i)
-        ckff(i) = grff(i)/dk(i)
-    g_rmm(i)= crmm(i) + grmm(i) + 1
-        g_rfm(i)= crfm(i)  +  grfm(i) + 1
-        g_rff(i)= crff(i)  +  grff(i) + 1
-    end do
+    do i = 2,n 
+       g_rmm(i) = (crmm(i)  +  grmm(i) )/dr(i)  + 1
+    end do   !  i
     ! print the results
     do i = 2,n
-        write(10,"(4f10.4)")dr(i),g_rmm(i),g_rfm(i),g_rff(i)
-        write(20,"(4f10.4)")dr(i),grmm(i), grfm(i), grff(i)
-        write(30,"(4f10.4)")dr(i),gkmm(i), gkfm(i), gkff(i)
-        write(40,"(4f10.4)")dr(i),ckmm(i), ckfm(i), ckff(i)
+        write(10,*)dr(i),g_rmm(i) 
+        write(20,*)dr(i),grmm(i)/dr(i) 
+        write(30,*)dr(i),crmm(i)/dr(i) 
+        write(40,*)dr(i),(grmm(i) + crmm(i))/dr(i) 
+        write(60,*)dk(i),1.0 + rhom*(gkmm(i) + ckmm(i))/dk(i)
     end do
     print *,"time cost is ",t2 - t1
 
@@ -73,6 +59,12 @@ program main
     close(20)
     close(30)
     close(40)
-!}}}
-    
+    close(60)
+    !************ check the result *************************
+    write(50,*)ch_b,"test",ch_b,ch_b,"grmm"
+    do i = 2,n
+        write(50,"(2f18.10)")test(i)/dr(i),grmm(i)/dr(i)
+    end do
+    !******************************************************
+    !print *,hkmm(10)
 end program main
