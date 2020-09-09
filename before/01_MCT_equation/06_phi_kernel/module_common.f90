@@ -22,7 +22,7 @@ module module_common
     real(8),parameter           :: d12    = (d11 + d22)/2.0  
     real(8),parameter           :: d(m*m) = (/d11,d12,d22,0D0/)
     ! the number dendity
-    real(8),parameter           :: rho    = 0.4
+    real(8),parameter           :: rho    = 0.9
     !   matrix T and dimensionless
     real(8),parameter           :: atom   = 1.6605402E-27
     real(8),parameter           :: temper = 300.0           ! temperature 
@@ -87,13 +87,14 @@ module module_common
 !  MCT equation
     ! self-scattering
     real(8)                     ::  f(ncut,tmnum) 
-    real(8)                     ::  phi(tmnum) 
     real(8)                     ::  finalf(ncut) 
     ! self-scattering partial time
     real(8)                     ::  par_f(ncut,tmnum) 
     real(8)                     ::  memory(ncut,tmnum)! memory kernel
     real(8)                     ::  diffu      ! diffusion
     real(8)                     ::  mat_A(ncut,ncut,ncut)
+    !real(8)                     ::  mat_B(ncut)
+    !real(8)                     ::  mat_D(ncut)
     real(8)                     ::  mat_R(ncut)
     real(8)                     ::  mat_K(ncut)
     real(8)                     ::  mat_U(ncut)

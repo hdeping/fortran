@@ -42,7 +42,7 @@ subroutine getmatrixes()
     end do
     !  get matrix A
     do q = 1,ncut
-        tovl = h**7.0*rho/(16.0*pi**2.0*dble(q))
+        tovl = h**7.0/(16.0*pi**2.0*dble(q)*rho)
        ! print *,"tovl = ",tovl
        ! pause
         do k = 1,ncut
@@ -141,7 +141,6 @@ subroutine getmct2()
            end do
            par_f(q,t) = tmpa/mat_U(q)
            f(q,t + 1) = f(q,t) + par_f(q,t)
-           if(abs(f(q,t + 1)) > 20)pause
        end do
        !print *,par_f(90:100,t)
        !pause

@@ -27,7 +27,7 @@ program main
         end do
     end do
     !  get the data of the rest time
-    do i = 1,14
+    do i = 1,10
         call cpu_time(t1)
         dt = dt*2.0
         ! get a solution cycle
