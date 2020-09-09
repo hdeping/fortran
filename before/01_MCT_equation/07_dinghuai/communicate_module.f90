@@ -4,11 +4,11 @@ use parameter_module
 contains
 
 !--******************************************--!
-
+!subroutine comm_initial_parameter{{{
 subroutine comm_initial_parameter()
 integer                        ::                i
-integer, parameter            ::                nn=(4*n)*8
-integer(1), dimension(nn)    ::                buff
+integer, parameter             ::                nn=(4*n)*8
+integer(1), dimension(nn)      ::                buff
 integer                        ::                position, size    
 
     if (senode==0) then
@@ -30,9 +30,8 @@ integer                        ::                position, size
     endif
 
 end subroutine comm_initial_parameter
-
-!--******************************************--!
-
+!}}}
+!subroutine comm_phi{{{
 subroutine comm_phi()
 integer                        ::                i, j
 
@@ -49,8 +48,5 @@ do i=0, node-1
 enddo
 
 end subroutine comm_phi
-
-!--******************************************--!
-
-
+!}}}
 end module communicate_module

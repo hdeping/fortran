@@ -11,7 +11,7 @@ contains
 subroutine initial_phi()
 integer                            ::                i, j, k
 real*8, dimension(2, 2)            ::                ta, tc
-character(len=10)                ::                filename
+character(len=10)                  ::                filename
 
     phi(0:n-1)=1.0
     
