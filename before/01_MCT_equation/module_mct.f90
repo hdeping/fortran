@@ -6,18 +6,31 @@ contains
 !subroutine getmatrixes{{{
 subroutine getmatrixes()
     !real(8)             :: tmpvalue(m,m)
+    integer              :: ii
+    integer              :: jj
+
+    !  get r and k
+    do i = 1,n
+        dr(i) = deltar*dble(i - 1)
+        dk(i) = h*dble(i - 1)
+    end do
     filename = "sk.txt"
     open(20,file = filename, status = "old", iostat = ierror)
     ! read Sk and Ck
-    do i = 1,n
+    do i = 1,ncut
         read(20,"(3f18.9)",iostat = ierror)sk(1,1,i),sk(1,2,i),sk(2,2,i)
+        if(ierror /= 0)exit
         sk(2,1,i) = sk(1,2,i)
+        !print *,"sk = "
+        !print *,sk(:,:,i)
+        !pause
     end do
     close(20)
     filename = "ck.txt"
     open(20,file = filename, status = "old",iostat = ierror)
-    do i = 1,n
+    do i = 1,ncut
         read(20,"(3f18.9)",iostat = ierror)ck(1,1,i),ck(1,2,i),ck(2,2,i)
+        if(ierror /= 0)exit
         ck(2,1,i) = ck(1,2,i)
     end do
     close(20)
@@ -33,31 +46,51 @@ subroutine getmatrixes()
             ck(i,j,:) = ck(j,i,:)
         end do
     end do
-    ! get inver_sk(m,m,n)
+    ! get inver_sk(m,m,ncut)
+    ! get deltafun(\delta function)
     deltafun = 0.0
-    do i = 1,n
+    do i = 1,m
         deltafun(i,i) = 1.0
     end do
-    do i = 1,n
+    inver_sk(1,:,1) = (/0.0,0.0/)
+    inver_sk(2,:,1) = (/0.0,0.0/)
+    do i = 2,ncut
         inver_sk(:,:,i) = sol_mat(sk(:,:,i),deltafun,m)
+        !print *,"inver_sk = "
+        !print *,inver_sk(:,:,i)
+        !print *,multi_mat(inver_sk(:,:,i),sk(:,:,i),m,m,m)
+        !print *,multi_mat(sk(:,:,i),inver_sk(:,:,i),m,m,m)
+        !pause
     end do
     ! initial D
     diffu(1,:) = (/1.0,1.0/)
     diffu(2,:) = (/1.0,1.0/)
     !  get K and R
-    do i = 1,n
+    mat_K(1,:,1) = (/0.0,0.0/)
+    mat_K(2,:,1) = (/0.0,0.0/)
+    mat_R(1,:,1) = (/0.0,0.0/)
+    mat_R(2,:,1) = (/0.0,0.0/)
+    do i = 2,ncut
         tmpvalue = 0.0
+        !print *,"v(2) = ",v
+        !print *,"dk   = ",dk(i)
+        !pause
         do itmp = 1,m
             do jtmp = 1,m
-            mat_K(itmp,jtmp,i) = i**2.0*diffu(itmp,jtmp)*v(jtmp)
+            mat_K(itmp,jtmp,i) = dk(i)**2.0*diffu(itmp,jtmp)*v(jtmp)
             end do
         end do
         mat_R(:,:,i) = multi_mat(mat_K(:,:,i),inver_sk(:,:,i),m,m,m)
+        !print *,"K = "
+        !print *,mat_k(:,:,i)
+        !print *,"R = "
+        !print *,mat_R(:,:,i)
+        !pause
     end do
 
 end subroutine getmatrixes
 !}}}
-!get MCT equation{{{
+!get MCT equation first time cycle{{{
 function getmct()
    real(8)             :: getmct
    integer             :: ii 
@@ -65,35 +98,115 @@ function getmct()
    real(8)             :: tmpa(m,m)
    real(8)             :: tmpb(m,m)
    real(8)             :: tmpc(m,m)
-   real(8)             :: tmpd(m,m)
+   real(8)             :: inver_U(m,m,ncut)
 
    ! get f(t1) 
    do ii = 1,m
         do jj = 1,m
             f(ii,jj,:,1) = sk(ii,jj,:)
+            !print *,sk(ii,jj,1:10)
+            !print *,f(ii,jj,1:10,1)
+            !pause
         end do
    end do
    ! get U
-   do q = 1,n
+   do q = 1,ncut
         memory(:,:,q,1) = getmemory(q,1)
-        mat_U(:,:,q) = deltafun(:,:) + multi_mat(mat_K(:,:,i),&
-                       memory(:,:,i,1),m,m,m)
+        !print *,memory(:,:,q,1)
+        !pause
+        mat_U(:,:,q)   = deltafun(:,:) + dt*multi_mat(mat_K(:,:,q),&
+                         memory(:,:,q,1),m,m,m)
+        inver_U(:,:,q) = sol_mat(mat_U(:,:,q),deltafun,m)
+        !print *,"U is "
+        !print *,mat_U(:,:,q)
+        !print *," inver U is "
+        !print *,inver_U(:,:,q)
+        !pause
    end do
-   do t = 1,tmnum/2
-        do q = 1,n
-            !  get memory kernel
-            tmpa(ii,jj) = - dt*mat_R(ii,jj,q)
+   do t = 1,tmnum/2 - 1
+        print *,"t = ",t
+        call cpu_time(t1)
+
+        !get memory kernel
+        do q = 1,ncut
+            if(t /= 1)memory(:,:,q,t) = getmemory(q,t)
+        end do
+
+        do q = 1,ncut
+            tmpa  = multi_mat(mat_R(:,:,q),f(:,:,q,t),m,m,m)
             do ii = 1,t - 1
-               tmpa(:,:) = tmpa(:,:) - mat_K(:,:,q)*memory(:,:,q,t+1-ii)&
-                           *par_f(:,:,q,ii) 
+               tmpb =  multi_mat(mat_K(:,:,q),memory(:,:,q,t+1-ii),m,m,m)
+               tmpc =  multi_mat(tmpb, par_f(:,:,q,ii),m,m,m)           
+               tmpa =  tmpa + tmpc
             end do
-            mat_V(:,:,q) = tmpa(:,:)
-            par_f(:,:,q,t) = sol_mat(mat_U(:,:,q),mat_V(:,:,q),m)
+            mat_V(:,:,q) = - dt*tmpa
+            par_f(:,:,q,t) = multi_mat(inver_U(:,:,q),mat_V(:,:,q),m,m,m)
             f(:,:,q,t+1) = f(:,:,q,t) + par_f(:,:,q,t)
         end do
+        call cpu_time(t2)
+        print *,"time cost is ",t2 - t1
    end do
    getmct = 1
 end function getmct
+!}}}
+!get MCT2 {{{
+function getmct2()
+   real(8)             :: getmct2
+   integer             :: ii 
+   integer             :: jj
+   real(8)             :: tmpa(m,m)
+   real(8)             :: tmpb(m,m)
+   real(8)             :: tmpc(m,m)
+   real(8)             :: inver_U(m,m,ncut)
+
+   ! get f(t1) 
+   do ii = 1,m
+        do jj = 1,m
+            f(ii,jj,:,1) = sk(ii,jj,:)
+            !print *,sk(ii,jj,1:10)
+            !print *,f(ii,jj,1:10,1)
+            !pause
+        end do
+   end do
+   ! get U
+   do q = 1,ncut
+        memory(:,:,q,1) = getmemory(q,1)
+        !print *,memory(:,:,q,1)
+        !pause
+        mat_U(:,:,q)   = deltafun(:,:) + dt*multi_mat(mat_K(:,:,q),&
+                         memory(:,:,q,1),m,m,m)
+        inver_U(:,:,q) = sol_mat(mat_U(:,:,q),deltafun,m)
+        !print *,"U is "
+        !print *,mat_U(:,:,q)
+        !print *," inver U is "
+        !print *,inver_U(:,:,q)
+        !pause
+   end do
+   do t = 1,tmnum/2 - 1
+        print *,"t = ",t
+        call cpu_time(t1)
+
+        !get memory kernel
+        do q = 1,ncut
+            if(t /= 1)memory(:,:,q,t) = getmemory(q,t)
+        end do
+
+        do q = 1,ncut
+            tmpa  = multi_mat(mat_R(:,:,q),f(:,:,q,t),m,m,m)
+            do ii = 1,t - 1
+               tmpb =  multi_mat(mat_K(:,:,q),memory(:,:,q,t+1-ii),m,m,m)
+               tmpc =  multi_mat(tmpb, par_f(:,:,q,ii),m,m,m)           
+               tmpa =  tmpa + tmpc
+            end do
+            mat_V(:,:,q) = - dt*tmpa
+            par_f(:,:,q,t) = multi_mat(inver_U(:,:,q),mat_V(:,:,q),m,m,m)
+            f(:,:,q,t+1) = f(:,:,q,t) + par_f(:,:,q,t)
+        end do
+        call cpu_time(t2)
+        print *,"time cost is ",t2 - t1
+   end do
+   getmct2 = 1
+end function getmct2
 !}}}
 !get memory(q,t){{{
 function getmemory(q,t)
@@ -106,20 +219,27 @@ function getmemory(q,t)
    integer             :: jj
 
    ! get matrix mat_A, mat_B, mat_D
-   do k = 1,n
+   do k = 1,ncut
+        !print *,"ck = ",ck(:,:,k)
+        !print *,"sk = ",sk(:,:,k)
+        !pause
         mat_B(:,:,k) = multi_mat(ck(:,:,k),f(:,:,k,t),m,m,m)
         mat_D(:,:,k) = multi_mat(f(:,:,k,t),ck(:,:,k),m,m,m)
         mat_A(:,:,k) = multi_mat(mat_B(:,:,k),ck(:,:,k),m,m,m)
+        !print *, mat_B(:,:,k)
+        !print *, mat_D(:,:,k)
+        !print *, mat_A(:,:,k)
+        !pause
    end do
-   totalvalue = rhosum**2.0*h**3.0/(16.0*pi**2.0*q**5.0)
+   totalvalue = h**3.0/(16.0*pi**2.0*q**5.0)
    do ii = 1,m
         do jj = 1,m
             pre_factor = totalvalue/sqrt(xrate(ii)&
                          *xrate(jj))
             tmp = 0
-            do k = 1,300
+            do k = 1,ncut !  cut-off
                 !do p = abs(q - k),q + k
-                do p = abs(q - k),300   !  
+                do p = abs(q - k),ncut !   cut-off
                     if(p == 0)cycle
                     l1 = dble(q**2.0 + k**2.0 - p**2.0)
                     l2 = dble(p**2.0 + q**2.0 - k**2.0)
@@ -132,6 +252,58 @@ function getmemory(q,t)
         end do
         !print *,"h = ",h
    end do
+   !print *,"q = ",q,"t = ",t
+   !print *,"memory = ",getmemory(1,:),getmemory(2,:)
+   !pause
+end function getmemory
+!}}}
+!get newmemmory(q,t){{{
+function final_memory(q,t)
+   integer,intent(in)  :: q
+   integer,intent(in)  :: t
+   real(8)             :: final_memory(m,m)
+   real(8)             :: pre_factor
+   real(8)             :: totalvalue
+   integer             :: ii
+   integer             :: jj
+
+   ! get matrix mat_A, mat_B, mat_D
+   do k = 1,ncut
+        !print *,"ck = ",ck(:,:,k)
+        !print *,"sk = ",sk(:,:,k)
+        !pause
+        mat_B(:,:,k) = multi_mat(ck(:,:,k),f(:,:,k,t),m,m,m)
+        mat_D(:,:,k) = multi_mat(f(:,:,k,t),ck(:,:,k),m,m,m)
+        mat_A(:,:,k) = multi_mat(mat_B(:,:,k),ck(:,:,k),m,m,m)
+        !print *, mat_B(:,:,k)
+        !print *, mat_D(:,:,k)
+        !print *, mat_A(:,:,k)
+        !pause
+   end do
+   totalvalue = h**3.0/(16.0*pi**2.0*q**5.0)
+   do ii = 1,m
+        do jj = 1,m
+            pre_factor = totalvalue/sqrt(xrate(ii)&
+                         *xrate(jj))
+            tmp = 0
+            do k = 1,ncut !  cut-off
+                !do p = abs(q - k),q + k
+                do p = abs(q - k),ncut !   cut-off
+                    if(p == 0)cycle
+                    l1 = dble(q**2.0 + k**2.0 - p**2.0)
+                    l2 = dble(p**2.0 + q**2.0 - k**2.0)
+                    tmp = tmp + p*k*l1*(l1*mat_A(ii,jj,k)&
+                          *f(ii,jj,p,t) + l2*mat_B(ii,jj,k)&
+                          *mat_D(ii,jj,p))
+                end do
+            end do
+            final_memory(ii,jj) = tmp*pre_factor
+        end do
+        !print *,"h = ",h
+   end do
+   !print *,"q = ",q,"t = ",t
+   !print *,"memory = ",final_memory(1,:),final_memory(2,:)
+   !pause
 end function getmemory
 !}}}
 !**********************************************

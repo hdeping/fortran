@@ -3,17 +3,18 @@
 module module_common
 
     implicit none 
+!parameterss and variables{{{
 !parameters{{{
     integer,parameter           ::   l    = 10
     integer,parameter           ::   n    = 2**l
-    integer,parameter           ::  ncut  = 300! cut-off of n
+    integer,parameter           ::  ncut  = 100   ! cut-off of n
     integer,parameter           :: tmnum  = 200
     integer,parameter           ::   m    = 2 !number components
     integer,parameter           ::  fre   =  int(1E3)
     integer,parameter           ::  nnum  = 40
     real(8),parameter           ::   pi   = 3.141592653 
     real(8),parameter           :: deltar = 0.01
-    real(8),parameter           ::    h   = pi/dble(n)/deltar 
+    real(8),parameter           ::    h   = pi/dble(n)/deltar ! deltak
     real(8),parameter           :: error  = 1E-8      !  for the diwwerences
     ! the diameter
     real(8),parameter           :: d11    = 1.0       !  
@@ -28,9 +29,15 @@ module module_common
     real(8),parameter           :: xrate2 = 1 - xrate1
     real(8),parameter           ::xrate(m)= (/xrate1,xrate2/)
     real(8),parameter           :: rho(m) = (/rho1,rho2/)
-    real(8),parameter           :: tpture = 2.0E5  !  temperature concerned
-    real(8),parameter           :: v1     = tpture/18.0  ! water
-    real(8),parameter           :: v2     = tpture/28.0/dble(nnum)  ! polymer
+    !   matrix T and dimensionless
+    real(8),parameter           :: atom   = 1.6605402E-27
+    real(8),parameter           :: temper = 300.0           ! temperature 
+    real(8),parameter           :: kb     = 1.3806488E-23
+    real(8),parameter           :: tpture = kb*temper/atom
+    real(8),parameter           :: mass1  = 18.0            ! water
+    real(8),parameter           :: mass2  = 28.0*dble(nnum)  ! polymer
+    real(8),parameter           :: v1     = 1.0
+    real(8),parameter           :: v2     = 1.0
     real(8),parameter           :: v(m)   = (/v1,v2/) 
     real(8),parameter           :: gold   = (sqrt(5.0) - 1.0)/2.0
 !}}}
@@ -73,17 +80,17 @@ module module_common
 !OZ{{{
     ! for convenience, h for H, c for C
     !  k space 
-    real(8)                     ::  hk(m,m,n)      
-    real(8)                     ::  ck(m,m,n)      
-    real(8)                     ::  gamma_k(m,m,n)      
+    real(8)                     ::  hk(m,m,ncut)      
+    real(8)                     ::  ck(m,m,ncut)      
+    real(8)                     ::  gamma_k(m,m,ncut)      
     !  r space                       
-    real(8)                     ::  hr(m,m,n)      
-    real(8)                     ::  cr(m,m,n)      
-    real(8)                     ::  gamma_r(m,m,n)      
+    real(8)                     ::  hr(m,m,ncut)      
+    real(8)                     ::  cr(m,m,ncut)      
+    real(8)                     ::  gamma_r(m,m,ncut)      
     ! g(r)
-    real(8)                     ::  gr(m,m,n)      
+    real(8)                     ::  gr(m,m,ncut)      
     ! structure factor
-    real(8)                     ::  sk(m,m,n)      
+    real(8)                     ::  sk(m,m,ncut)      
 !}}}
 !  MCT equation
     ! self-scattering
@@ -100,6 +107,7 @@ module module_common
     real(8)                     ::  mat_U(m,m,ncut)
     real(8)                     ::  mat_V(m,m,ncut)
     real(8)                     ::  inver_sk(m,m,ncut)
+!}}}
 
     contains
 !*********** judge ********************
