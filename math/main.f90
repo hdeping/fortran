@@ -1,30 +1,47 @@
 program main
     use module_common
-    implicit none
-    integer         :: times = 0
+    !it is a problem that there is a sequence {1..9},
+    !how to insert "+","-" or "" into any position between
+    !the numbers such as 1 - 2 + 345678 + 9, and make the 
+    !final answer is 100? Try to write a program to 
+    !solve it
 
-    filename = "data.txt"
-    open(10,file = filename)
+    integer times,kk
+    integer symbol
+    integer asum,bsum  ! used in the calculation
+    character(len = 1)   :: ch(3) = (/' ','+','-'/)
+    character(len = 1)   :: ch1(n) 
 
-    write(10,*)"times"
-
-    do i = 1,n - 4
-        do j = i + 1,n - 3
-            do k = j + 1,n - 2
-                do kk = k+1,n - 1
-                    do jj = kk + 1,n
-                        if (  i+j+k+kk+jj < 100)then
-                            cycle
-                        endif ! if ends
-                        if ( tail(i,j,k,kk,jj) /= 0 )then
-                            times = times + 1
-                            write(10,"(8i6)")times,i,j,k,kk,jj
-                        endif ! if ends
-                    enddo !cycle ends
-                enddo !cycle ends
-            enddo !cycle ends
-        enddo !cycle ends
+    do i = 1,n
+        a(i) = i
     enddo !cycle ends
-    
      
+    b(1) = 1
+    do i = 0,total
+        b(2:n) = getTernary(i)
+        asum = 0
+        bsum = 0
+        do j = 1,n
+            if ( b(j) == 1 )then
+                symbol = 1
+                asum = asum + bsum
+                bsum = symbol*a(j)
+            elseif ( b(j) == 2 )then
+                symbol = - 1
+                asum = asum + bsum
+                bsum = symbol*a(j)
+            elseif ( b(j) == 0 )then
+                bsum = 10 * bsum + symbol*a(j)
+            endif ! if ends
+        enddo !cycle ends
+        asum = asum + bsum
+        if ( asum == 100 )then
+            print 100,b
+        endif ! if ends
+    enddo !cycle ends
+
+     
+
+100 format (10i1)
+
 end program main
