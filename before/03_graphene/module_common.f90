@@ -1,24 +1,15 @@
  module module_common
         Use DFLIB
         use IFQWIN
-        type node
-            integer  i
-            integer  j
-            type(node),pointer   :: next
-        end type node
-        type(node),pointer    ::  head  ,p , last
-        integer,parameter           :: n = 87,m=100,totaltimes=int(2E6)
-        integer,parameter           ::  freq = int(1E3),k=5  
-        integer*2,parameter       :: ux = 20,uy=20,dx=1400,dy=750
-        real*8,parameter            :: r = 5,r0=12
-        integer  state(n,m),nei1(4,2),nei2(6,2),num1,num2,i1,i2
+        integer,parameter           :: n = 40,m=36
+        integer,parameter           ::  freq = int(1E5),k=5  
+        integer*2,parameter       :: ux = 100,uy=50,dx=1400,dy=750
+        real*8,parameter            :: r = 10,r0=25
+        integer  state(n,m),nei(3,2),nei2(6,2),num1,num2,i1,i2
         real*8   xcoor1,ycoor1,xcoor2,ycoor2
-        real  x1,x2,x3,t1,t2
+        real  x1,x2,x3
         character*20  filename
-        integer  itmp,jtmp
-        integer  junit
-        integer  ::    border((m+n)*2,2)    ! for the border site
-        real     desorb
+        integer  t1,t2,t3
         
         
     ! /* ------ Definitions of Globally Used Variables for Graphic Settings ------- */ !
@@ -49,5 +40,8 @@
                                     #808080,   &        ! Dark Gray            /* --- 15
                                     #C0C0C0,   &      ! Bright Gray        /* --- 16
                                     #C8E8C8 /)          ! Comfortable Green    /* ___17
+
 !***************************************************************
     end module module_common
+
+    
