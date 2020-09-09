@@ -7,16 +7,16 @@ module module_common
 !variables{{{
     integer,parameter           ::   l    = 10
     integer,parameter           ::   n    = 2**l
-    integer,parameter           ::  fre   =  int(1E3)
+    integer,parameter           ::  fre   =  int(1E2)
     real(8),parameter           ::   pi   = 3.141592653 
     !real(8),parameter           ::  top   = 10.24
     real(8),parameter           :: deltar = 0.01
     real(8),parameter           :: deltak = pi/deltar/dble(n)
-    real(8),parameter           :: error  = 3E-3               !  for the differences
+    real(8),parameter           :: error  = 1E-3               !  for the differences
     real(8),parameter           :: dmm    = 1.0                !  m-m 
     real(8),parameter           :: dff    = 1.0                !  f-f
     real(8),parameter           :: dfm    = (dmm + dff)/2.0    !  f-m
-    real(8),parameter           :: rhom   = 0.95              !  the density of matrix
+    real(8),parameter           :: rhom   = 0.8              !  the density of matrix
     real(8),parameter           :: rhof   = 0.1                !  the density of fluid 
     real(8),parameter           :: gold   = (sqrt(5.0) - 1.0)/2.0  ! golden rate
     !  variables for fft

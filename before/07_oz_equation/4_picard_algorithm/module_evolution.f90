@@ -53,7 +53,7 @@ subroutine solve_OZ(out_ck,lambda,in_ck)
     end do
     ! fft to calculate in_ck
     out_ck = fst(crmm,1)
-    lambda = conver(test,out_ck)
+    lambda = judge(test,out_ck)
 end subroutine solve_OZ
 !}}}
 !subroutine evolution_old{{{
@@ -61,7 +61,7 @@ end subroutine solve_OZ
 subroutine evolution_old()
     times = 0
     ckmm  = 1.0
-    rate  = 0.9
+    rate  = 0.5
     call cpu_time(t1)
     call solve_OZ(ckmm,lambda,ckmm)
     !  begin the evolution_old
@@ -128,6 +128,7 @@ function may(d)
     end do
 end function may
 !}}}
+!************ judge the convergence **********
 !function judge{{{
 ! compare the difference between two arrays
 ! judge the convergence
@@ -177,8 +178,8 @@ function conver(a,b)
 
     lambda1 = judge(a,test1)
     lambda2 = judge(a,test2)
-    !print *,lambda1, lambda2,lambda1/lambda2
-    !pause
+    print *,lambda1, lambda2,lambda1/lambda2
+    pause
     if(lambda1 < lambda2)then
         b      = test1
         conver = lambda1
@@ -190,6 +191,7 @@ function conver(a,b)
     
 end function conver
 !}}}
+!************ check the results **********
 !subroutine check {{{
 ! check if the result is the solution to 
 ! the OZ equation
@@ -221,4 +223,45 @@ subroutine check()
     close(60)
 end subroutine check
 !}}}
+!subroutine new_check {{{
+! check if the result is the solution to 
+! the OZ equation
+!  test hrmm and give a new one
+!  compare the two 
+subroutine new_check()
+    include     "omp_lib.h"
+
+    integer                     :: ii
+    integer                     :: jj
+    integer                     :: kk
+    real(8)                     :: tmp1
+    real(8)                     :: tmp2
+
+    !$omp parallel do
+    do ii = 2,n
+        tmp1 = 0.0
+        !$omp parallel do
+        do jj = 2,n
+            tmp2 = 0.0
+            !$omp parallel do
+            do kk = abs(ii - jj),ii + jj
+                if(kk == 0)cycle
+                if(kk > n)exit
+                tmp2 = tmp2 + deltar*dr(kk)*crmm(kk)
+            end do
+            !$omp end parallel do
+            tmp1 = tmp1 + deltar*dr(jj)*hrmm(jj)*tmp2
+        end do
+        !$omp end parallel do
+        test(ii) = crmm(ii) + 2*pi*rhom*tmp1/dr(ii)
+    end do
+    !$omp end parallel do
+    lambda  = judge(test,hrmm)
+    lambda1 = 0.0
+    do ii = 102,n
+        lambda1 = lambda1 + abs(hrmm(ii) - test(ii))
+    end do
+end subroutine new_check
+!}}}
+
 end module module_evolution
