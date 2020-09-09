@@ -56,13 +56,13 @@ subroutine mouse(button,state,x,y)
     integer,intent(in)          ::  y
 
     select case(button)
-        case (glut_left_button)
+        case glut_left_button
             if ( state == glut_down )then
                 call glutidlefunc_gl(spindisplay)
             endif ! if ends
-        case (glut_middle_button)   
-            if ( state == glut_down )then
-                call glutidlefunc_gl(null)
+        case glut_middle_button   
+        if ( state == glut_down )then
+            call glutidlefunc_gl(null)
         endif ! if ends
 
     end select
